@@ -181,29 +181,47 @@ plants-intelligent-system/
 **Q：为什么删掉了 `camera_grape_segment.html`、`py/app.py`、`app_mango_leaf_segment.py`？**
 它们对应的后端模型/接口并不存在或已废弃（摄像头接口、旧版单文件入口、GradCAM 诊断页的模板缺失导致访问必然 500），保留只会误导使用。叶片诊断请用 `/leaf_disease/test_predict`：UNet++ 分割病灶 + DINOv2 识别物种与病害。
 
-## 权重与数据集
+## 权重与测试集
 
-仓库包含**推理所需的 6 个权重（约 349 MB）**，克隆后装好依赖即可直接启动，无需再找模型文件。数据集与训练产物不在仓库内。
+仓库包含**推理所需的 6 个权重（约 349 MB）**和**5 个测试集（1686 个文件 / 359.5 MB）**，克隆后装好依赖即可直接启动并复现下表的准确率；训练集与训练产物不在仓库内。
 
-| 内容 | 大小 | 是否入库 |
+### 推理权重
+
+| 文件 | 大小 |
+| --- | --- |
+| `models/mango_mdcn_best_checkpoint.pth` | 27.2 MB |
+| `models/mango_variety_model.pth` | 67.7 MB |
+| `models/grape_disease_model.pth` | 92.0 MB |
+| `models/grape_segment_model.pt` | 52.3 MB |
+| `models/leaf_disease_segment_model.pth` | 25.4 MB |
+| `models/leaf_disease_classify_model.pth` | 84.6 MB |
+
+### 测试集
+
+| 路径 | 文件数 | 大小 |
 | --- | --- | --- |
-| `models/mango_mdcn_best_checkpoint.pth` | 27.2 MB | ✅ |
-| `models/mango_variety_model.pth` | 67.7 MB | ✅ |
-| `models/grape_disease_model.pth` | 92.0 MB | ✅ |
-| `models/grape_segment_model.pt` | 52.3 MB | ✅ |
-| `models/leaf_disease_segment_model.pth` | 25.4 MB | ✅ |
-| `models/leaf_disease_classify_model.pth` | 84.6 MB | ✅ |
-| 5 个数据集目录（`Grape Detection Segment` 等） | ~5.5 GB | ❌ 训练数据 |
-| `models/*_best_checkpoint.pth`（葡萄病害、芒果品种） | 289 / 212 MB | ❌ 单文件超 100 MiB，且与上面的 `_model.pth` 等价（含优化器状态） |
-| `train/runs/**/weights/*.pt`、`best_model.pth` | ~230 MB | ❌ 训练检查点 |
-| `train/sam_vit_b_01ec64.pth`、`train/yolov8m*.pt` | ~460 MB | ❌ 预训练主干，ultralytics / SAM 可自动下载 |
-| `train/**/*.csv`、`*.json`、`*.yaml` | 0.5 MB | ✅ 训练指标与类别顺序 |
+| `Grape Detection Segment/yolo_seg_dataset/test` | 152（76 图 + 76 标注） | 267.4 MB |
+| `Grape Disease Dataset/test` | 887 | 56.6 MB |
+| `Leaf Disease Segment/classification/test` | 87 | 8.3 MB |
+| `Mango Dataset/test` | 160 | 13.9 MB |
+| `Mango Leaf Dataset/test` | 400 | 13.4 MB |
+
+### 未入库内容
+
+| 内容 | 大小 | 原因 |
+| --- | --- | --- |
+| 5 个数据集的训练集与验证集 | ~5.1 GB | 体积过大 |
+| `models/*_best_checkpoint.pth`（葡萄病害、芒果品种） | 289 / 212 MB | 单文件超 100 MiB；含优化器状态，与已入库的 `_model.pth` 等价 |
+| `train/sam_vit_b_01ec64.pth` | 375 MB | 单文件超 100 MiB；仅训练用，SAM 官方可下载 |
+| `train/runs/**/weights/*.pt`、`best_model.pth` | ~230 MB | 训练检查点 |
+| `train/yolov8m*.pt`、`yolo11n.pt` | ~110 MB | 预训练主干，ultralytics 自动下载 |
+| `uploads/`、`database/*.db` | — | 运行时生成 |
 
 > `model_registry.py` 按顺序回退：葡萄病害优先找 `grape_disease_model.pth`（已入库），芒果品种优先找 `mango_variety_best_checkpoint.pth`、缺失时自动回退 `mango_variety_model.pth`（已入库），因此仓库里的权重足够跑通全部 5 个页面。
 
 需要完整复现训练时：
 
-1. 把 5 个数据集放回项目根目录，目录名保持原样，Notebook 中的相对路径即可继续使用。
+1. 把训练集与验证集放回各数据集目录，目录名保持原样，Notebook 中的相对路径即可继续使用。
 2. 缺失的检查点放到 `models/` 或用 `PLANT_MODELS_DIR` 指向外部目录。
 3. 运行 `python py/check_models.py` 自检，缺失的项会逐个列出。
 4. `database/` 与 `uploads/` 目录会在首次启动时自动创建。

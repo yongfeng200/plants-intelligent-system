@@ -1,11 +1,26 @@
 # ============================================================
-# 数据集：体积过大（合计约 5.5 GB），不入库
+# 数据集：只上传 5 个测试集（1686 个文件 / 约 360 MB）
+# 训练集与验证集体积过大，继续排除
 # ============================================================
-/Grape Detection Segment/
-/Grape Disease Dataset/
-/Leaf Disease Segment/
-/Mango Dataset/
-/Mango Leaf Dataset/
+/Grape Detection Segment/*
+!/Grape Detection Segment/yolo_seg_dataset/
+/Grape Detection Segment/yolo_seg_dataset/*
+!/Grape Detection Segment/yolo_seg_dataset/test/
+
+/Grape Disease Dataset/*
+!/Grape Disease Dataset/test/
+
+/Leaf Disease Segment/*
+!/Leaf Disease Segment/classification/
+/Leaf Disease Segment/classification/*
+!/Leaf Disease Segment/classification/test/
+
+/Mango Dataset/*
+!/Mango Dataset/test/
+
+/Mango Leaf Dataset/*
+!/Mango Leaf Dataset/test/
+
 /Niphad Grape Leaf Disease Dataset (NGLD)/
 
 # ============================================================
