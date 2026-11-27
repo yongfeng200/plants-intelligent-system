@@ -8,8 +8,8 @@
 | --- | --- | --- | --- | --- | --- |
 | 葡萄病害识别 | `/grape/test_predict_grape` | `models/grape_disease_model.pth` | ResNet50 + CBAM | 4 | 99.89% |
 | 葡萄果实分割识别 | `/grape_segment/test_predict_grape_segment` | `models/grape_segment_model.pt` | YOLOv8-seg | 3（品种） | — |
-| 芒果品种识别 | `/mango_variety/test_predict_mango_variety` | `models/mango_variety_best_checkpoint.pth`（回退 `_model.pth`） | EfficientNet-B4 | 8 | 100% |
-| 芒果叶片病害识别 | `/mango_leaf/test_predict_mango_leaf` | `models/mango_mdcn_best_checkpoint.pth`（回退 `_model.pth`） | MDCN（DenseNet-121） | 8 | 99.75% |
+| 芒果品种识别 | `/mango_variety/test_predict_mango_variety` | `models/mango_variety_best_checkpoint.pth` | EfficientNet-B4 | 8 | 100% |
+| 芒果叶片病害识别 | `/mango_leaf/test_predict_mango_leaf` | `models/mango_mdcn_best_checkpoint.pth` | MDCN（DenseNet-121） | 8 | 99.75% |
 | 叶片病灶分割 + 物种/疾病识别 | `/leaf_disease/test_predict` | `models/leaf_disease_segment_model.pth`、`models/leaf_disease_classify_model.pth` | UNet++（EfficientNet-B0）+ DINOv2 ViT-S/14 双头 | 5 物种 / 10 病害 | 联合 71.3% |
 
 > 「叶片病灶分割 + 物种/疾病识别」先用 UNet++ 预测病灶 mask 并统计病斑个数与面积占比，再用 DINOv2 微调模型在整叶原图上识别物种与病害；联合概率只在合法的「物种×病害」组合上归一化。
