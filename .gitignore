@@ -9,13 +9,21 @@
 /Niphad Grape Leaf Disease Dataset (NGLD)/
 
 # ============================================================
-# 模型权重：单个最大 275 MB，超过 GitHub 100 MB 限制
+# 模型权重：默认忽略，只放推理必需的 6 个（约 349 MB）
+# 其余为含优化器状态的训练检查点，单文件超 100 MiB 无法入库
 # ============================================================
 /models/*.pth
 /models/*.pt
 /models/*.pkl
 /models/*.ckpt
-# 两个 class_to_idx 映射表只有几 KB，保留
+# 推理权重：5 个页面实际加载的文件
+!/models/mango_mdcn_best_checkpoint.pth
+!/models/mango_variety_model.pth
+!/models/grape_disease_model.pth
+!/models/grape_segment_model.pt
+!/models/leaf_disease_segment_model.pth
+!/models/leaf_disease_classify_model.pth
+# 两个 class_to_idx 映射表只有几 KB
 !/models/mango_variety_class_to_idx.pth
 !/models/mango_disease_to_idx.pth
 
