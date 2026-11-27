@@ -1,0 +1,389 @@
+/* ============================================================
+   植物智能识别系统 · 统一动效与交互样式
+   仅补充/增强现有页面样式，不覆盖业务布局
+   ============================================================ */
+
+:root {
+    --plant-primary: #667eea;
+    --plant-secondary: #764ba2;
+    --plant-success: #11998e;
+    --plant-danger: #f5576c;
+    --plant-ink: #2c3e50;
+    --plant-muted: #6b7280;
+    --plant-radius: 18px;
+    --plant-shadow: 0 12px 32px rgba(31, 41, 55, 0.12);
+}
+
+/* -------------------- 通用进入动画 -------------------- */
+@keyframes plant-rise {
+    from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.985); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes plant-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes plant-pop {
+    0%   { opacity: 0; transform: scale(0.86); }
+    60%  { opacity: 1; transform: scale(1.03); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes plant-sweep {
+    from { transform: translateX(-120%) skewX(-18deg); }
+    to   { transform: translateX(240%) skewX(-18deg); }
+}
+
+@keyframes plant-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes plant-pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.35); }
+    70%  { box-shadow: 0 0 0 12px rgba(102, 126, 234, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+}
+
+.plant-enter {
+    animation: plant-rise 0.55s cubic-bezier(0.22, 0.68, 0.36, 1) both;
+    animation-delay: var(--plant-delay, 0ms);
+}
+
+.plant-fade-in {
+    animation: plant-fade 0.45s ease both;
+}
+
+/* 图片淡入，避免结果图“闪现” */
+.plant-img-in {
+    animation: plant-img-in 0.55s ease both;
+}
+@keyframes plant-img-in {
+    from { opacity: 0; transform: scale(0.985); filter: saturate(0.7); }
+    to   { opacity: 1; transform: scale(1); filter: saturate(1); }
+}
+
+/* -------------------- 粒子背景增强 -------------------- */
+@keyframes plant-particle-float {
+    0% {
+        transform: translate3d(0, 0, 0) scale(0.5);
+        opacity: 0;
+    }
+    8% {
+        opacity: var(--p-opacity, 0.5);
+    }
+    88% {
+        opacity: var(--p-opacity, 0.5);
+    }
+    100% {
+        transform: translate3d(var(--p-drift, 40px), -112vh, 0) scale(1.05);
+        opacity: 0;
+    }
+}
+
+.particles .particle {
+    will-change: transform, opacity;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.55);
+}
+
+/* -------------------- 按钮：扫光 + 加载态 -------------------- */
+.btn-submit,
+.btn-browse,
+.btn-model,
+.btn-primary-custom {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.btn-submit::after,
+.btn-primary-custom::after {
+    content: "";
+    position: absolute;
+    top: -20%;
+    left: 0;
+    width: 35%;
+    height: 140%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+    transform: translateX(-120%) skewX(-18deg);
+    pointer-events: none;
+}
+
+.btn-submit:hover::after,
+.btn-primary-custom:hover::after {
+    animation: plant-sweep 0.85s ease;
+}
+
+.btn-submit:disabled,
+.btn-browse:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-submit.is-loading {
+    pointer-events: none;
+}
+
+.plant-spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: 0.5em;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: plant-spin 0.7s linear infinite;
+    vertical-align: -0.12em;
+}
+
+/* -------------------- 上传区拖拽态 -------------------- */
+.upload-card {
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+}
+
+.upload-card.dragover {
+    transform: translateY(-3px) scale(1.005);
+    box-shadow: 0 18px 44px rgba(102, 126, 234, 0.28);
+    border: 2px dashed rgba(102, 126, 234, 0.65) !important;
+}
+
+.upload-card.dragover .upload-label {
+    color: var(--plant-primary);
+}
+
+.drop-hint {
+    margin-top: 0.75rem;
+    color: var(--plant-muted);
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.file-selected {
+    color: var(--plant-success) !important;
+    font-weight: 600;
+}
+
+/* -------------------- 模型信息徽章 -------------------- */
+.model-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin: 0.35rem 0 1rem 0;
+    min-height: 26px;
+}
+
+.model-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4c5bd4;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.28);
+    white-space: nowrap;
+}
+
+.model-chip.is-success {
+    color: #0f766e;
+    background: rgba(17, 153, 142, 0.1);
+    border-color: rgba(17, 153, 142, 0.3);
+}
+
+.model-chip i {
+    font-size: 0.85rem;
+}
+
+/* -------------------- 结果 / 图表容器 -------------------- */
+.result-card,
+.chart-card {
+    transition: box-shadow 0.35s ease, transform 0.35s ease;
+}
+
+.result-card:hover {
+    box-shadow: 0 18px 46px rgba(31, 41, 55, 0.16);
+}
+
+.result-value {
+    font-variant-numeric: tabular-nums;
+}
+
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    height: 100%;
+    min-height: 220px;
+    color: var(--plant-muted);
+    font-size: 0.95rem;
+}
+
+/* -------------------- 提示 toast -------------------- */
+.plant-toast-host {
+    position: fixed;
+    top: 84px;
+    right: 22px;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.plant-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 240px;
+    max-width: 380px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.97);
+    color: var(--plant-ink);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
+    border-left: 4px solid var(--plant-primary);
+    font-size: 0.92rem;
+    line-height: 1.45;
+    animation: plant-toast-in 0.35s cubic-bezier(0.22, 0.68, 0.36, 1) both;
+    pointer-events: auto;
+}
+
+.plant-toast.is-success { border-left-color: var(--plant-success); }
+.plant-toast.is-error { border-left-color: var(--plant-danger); }
+.plant-toast.is-leaving { animation: plant-toast-out 0.3s ease forwards; }
+
+.plant-toast i {
+    font-size: 1.05rem;
+    margin-top: 1px;
+}
+.plant-toast.is-success i { color: var(--plant-success); }
+.plant-toast.is-error i { color: var(--plant-danger); }
+
+@keyframes plant-toast-in {
+    from { opacity: 0; transform: translate3d(24px, -6px, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes plant-toast-out {
+    to { opacity: 0; transform: translate3d(24px, -6px, 0); }
+}
+
+/* -------------------- 列表 / 卡片微交互 -------------------- */
+.record-card {
+    animation: plant-rise 0.5s ease both;
+    animation-delay: var(--plant-delay, 0ms);
+    transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+.record-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+}
+
+.stat-box h2,
+.stat-box h3 {
+    font-variant-numeric: tabular-nums;
+}
+
+/* -------------------- 导航下拉更顺滑 -------------------- */
+.dropdown-menu {
+    animation: plant-fade 0.18s ease both;
+}
+
+.navbar-brand i {
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.navbar-brand:hover i {
+    transform: rotate(14deg) scale(1.08);
+}
+
+/* -------------------- 无障碍：尊重系统“减少动效” -------------------- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .particles {
+        display: none !important;
+    }
+}
+
+/* -------------------- 小屏微调 -------------------- */
+@media (max-width: 576px) {
+    .plant-toast-host {
+        top: 72px;
+        right: 12px;
+        left: 12px;
+    }
+    .plant-toast {
+        max-width: none;
+    }
+    .model-chip {
+        font-size: 0.72rem;
+    }
+}
+
+/* -------------------- 预测结果：图片与图表等高布局 -------------------- */
+.result-row {
+    align-items: stretch;
+    --bs-gutter-y: 1.5rem;
+}
+
+.result-row > [class*="col-"] {
+    display: flex;
+}
+
+.result-row .result-card {
+    width: 100%;
+    padding: 1.5rem 1.6rem;
+}
+
+.media-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.media-panel #upload_test_image {
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    margin: 0 auto;
+    background: rgba(248, 250, 252, 0.75);
+}
+
+.media-panel #predict_class {
+    margin-top: 0.9rem;
+}
+
+.chart-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 1.25rem 1rem;
+}
+
+.chart-panel #main1 {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 380px;
+}
+
+@media (max-width: 991.98px) {
+    .media-panel #upload_test_image {
+        max-height: 320px;
+    }
+
+    .chart-panel #main1 {
+        min-height: 340px;
+    }
+}

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <title>葡萄实例分割 - 植物智能识别系统</title>
+    <meta content="" name="description">
+    <meta content="" name="keywords">
+
+    <link href="/static/assets/img/favicon.png" rel="icon">
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/vendor/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/plant-ui.css">
+    <script src="/static/js/echarts.js" charset="utf-8"></script>
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --grape-segment-gradient: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景粒子 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float-particle 15s infinite ease-in-out;
+        }
+
+        @keyframes float-particle {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translate(100px, -100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.98) !important;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-brand i {
+            font-size: 2rem;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-link {
+            color: #333 !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 10px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea !important;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: var(--primary-gradient);
+            color: white !important;
+            -webkit-text-fill-color: white;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown-menu {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .dropdown-item {
+            border-radius: 10px;
+            padding: 10px 15px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item i {
+            font-size: 1rem;
+            width: 20px;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .dropdown-item.active {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        /* 主容器 */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            padding: 2rem 0 3rem 0;
+        }
+
+        /* 页面标题卡片 */
+        .page-title-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-title-card h3 {
+            background: var(--grape-segment-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 上传卡片 */
+        .upload-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease-out 0.1s backwards;
+        }
+
+        .upload-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-input-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .form-control {
+            flex: 1;
+            min-width: 250px;
+            padding: 0.8rem 1.2rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .btn-browse {
+            background: var(--grape-segment-gradient);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 15px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-browse:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(142, 68, 173, 0.4);
+        }
+
+        .btn-submit {
+            background: var(--success-gradient);
+            border: none;
+            padding: 0.8rem 2.5rem;
+            border-radius: 15px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(17, 153, 142, 0.4);
+        }
+
+        /* 结果卡片 */
+        .result-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease-out 0.2s backwards;
+            margin-bottom: 2rem;
+        }
+
+        .result-card h5 {
+            background: var(--grape-segment-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .stat-box {
+            background: var(--grape-segment-gradient);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-box h2 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .stat-box p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+
+        #mode-indicator h2 {
+            font-size: 1.2rem;
+        }
+
+        /* 品种统计卡片 */
+        .variety-card {
+            background: linear-gradient(135deg, rgba(142, 68, 173, 0.1), rgba(52, 152, 219, 0.1));
+            border-radius: 15px;
+            padding: 1rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            border: 2px solid rgba(142, 68, 173, 0.3);
+        }
+
+        .variety-card h4 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0;
+            background: var(--grape-segment-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .variety-card p {
+            margin: 0.5rem 0 0 0;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .variety-color-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .image-comparison {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .image-box {
+            text-align: center;
+        }
+
+        .image-box h6 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .image-box img {
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            display: none;
+        }
+
+        /* 使用说明 */
+        .instruction-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            margin-top: 3rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease-out 0.3s backwards;
+        }
+
+        .instruction-card h4 {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .instruction-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--grape-segment-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-content h5 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-content p {
+            color: #666;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* 页脚 */
+        .footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 2rem 0;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 3rem;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .file-input-group {
+                flex-direction: column;
+            }
+
+            .form-control {
+                width: 100%;
+            }
+
+            .image-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 动态背景粒子 -->
+    <div class="particles" id="particles"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-flower1"></i> 植物智能识别系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-grid-fill"></i> 仪表板
+                        </a>
+                    </li>
+                    <!-- 分类识别下拉菜单 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="classificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-tags-fill"></i> 分类识别
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="classificationDropdown">
+                            <li><a class="dropdown-item" href="/grape/test_predict_grape">
+                                <i class="bi bi-circle-fill"></i> 葡萄病害识别
+                            </a></li>
+                            <li><a class="dropdown-item" href="/mango_variety/test_predict_mango_variety">
+                                <i class="bi bi-basket-fill"></i> 芒果品种识别
+                            </a></li>
+                            <li><a class="dropdown-item" href="/mango_leaf/test_predict_mango_leaf">
+                                <i class="bi bi-tree-fill"></i> 芒果叶片病害识别
+                            </a></li>
+                        </ul>
+                    </li>
+                    <!-- 图像分割下拉菜单 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="segmentationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bounding-box"></i> 图像分割
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="segmentationDropdown">
+                            <li><a class="dropdown-item" href="/grape_segment/test_predict_grape_segment">
+                                <i class="bi bi-bounding-box-circles"></i> 葡萄果实分割识别
+                            </a></li>
+                            <li><a class="dropdown-item" href="/leaf_disease/test_predict">
+                                <i class="bi bi-magic"></i> 叶片病害分割与识别
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> 我的记录
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+        <div class="container">
+            <!-- 页面标题 -->
+            <div class="page-title-card">
+                <h3>
+                    <i class="bi bi-bounding-box-circles"></i>
+                    葡萄实例分割识别
+                </h3>
+            </div>
+
+            <!-- 上传区域 -->
+            <div class="upload-card">
+                <div class="upload-label">
+                    <i class="bi bi-cloud-upload-fill"></i>
+                    上传待分割葡萄图像
+                </div>
+                <div class="file-input-group">
+                    <input id='location' class="form-control" placeholder="请选择图片文件..." readonly onclick="document.getElementById('i-file').click();">
+                    <button class="btn-browse" onclick="document.getElementById('i-file').click();">
+                        <i class="bi bi-folder2-open"></i> 浏览文件
+                    </button>
+                    <button class="btn-submit" id="submit">
+                        <i class="bi bi-send-fill"></i> 开始分割
+                    </button>
+                </div>
+                <input type="file" name="file" id='i-file' accept=".png, .jpg, .jpeg"
+                       onchange="document.getElementById('location').value = this.files.length ? this.files[0].name : '';" style="display: none">
+                <div class="drop-hint">
+                    <i class="bi bi-hand-index-thumb"></i>
+                    支持点击选择或直接拖拽图片到本区域 · PNG / JPG / JPEG · 最大 20MB
+                </div>
+            </div>
+
+            <!-- 结果展示区域 -->
+            <div class="result-card" id="result-card" style="display:none;">
+                <h5><i class="bi bi-clipboard-data-fill"></i> 分割结果</h5>
+
+                <!-- 统计信息 -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <h2 id="grape-count">0</h2>
+                            <p>检测到的葡萄数量</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-box">
+                            <h2 id="confidence">0%</h2>
+                            <p>平均置信度</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-box" id="mode-indicator">
+                            <h2 id="mode-text">YOLOv8-seg</h2>
+                            <p>分割模型</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 品种分布 -->
+                <div id="variety-distribution" style="display:none;">
+                    <h6 style="color: #2c3e50; font-weight: 600; margin: 1.5rem 0 1rem 0;">
+                        <i class="bi bi-pie-chart-fill"></i> 品种分布
+                    </h6>
+                    <div class="row" id="variety-stats">
+                        <!-- 动态生成品种统计 -->
+                    </div>
+                </div>
+
+                <!-- 图像对比 -->
+                <div class="image-comparison">
+                    <div class="image-box">
+                        <h6><i class="bi bi-image"></i> 原始图像</h6>
+                        <img id="original-image" alt="原始图像">
+                    </div>
+                    <div class="image-box">
+                        <h6><i class="bi bi-diagram-3"></i> 分割结果</h6>
+                        <img id="result-image" alt="分割结果">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 使用说明 -->
+            <div class="instruction-card">
+                <h4>
+                    <i class="bi bi-info-circle-fill"></i>
+                    使用说明
+                </h4>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="instruction-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h5>上传图像</h5>
+                                <p>点击上传区域选择葡萄图像</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="instruction-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h5>智能分割</h5>
+                                <p>系统自动检测、分割每颗葡萄并识别品种</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="instruction-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h5>查看结果</h5>
+                                <p>获取数量、品种分布和彩色可视化结果</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <p>&copy; 2024 植物智能识别系统 | 基于深度学习的植物病害诊断平台</p>
+    </footer>
+
+    <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="/static/js/plant-ui.js"></script>
+<script>
+    PlantUI.checkLogin();
+
+    PlantUI.bindUpload({
+        endpoint: '/grape_segment/submit_and_segment',
+        preview: '#original-image',
+        loadingText: 'YOLOv8-seg 分割中…',
+        successText: '分割完成',
+        onSuccess: function (data) {
+            PlantUI.countUp(document.getElementById('grape-count'), Number(data.grape_count || 0), { decimals: 0 });
+            document.getElementById('confidence').textContent = Number(data.confidence || 0).toFixed(1) + '%';
+            document.getElementById('mode-text').textContent = 'YOLOv8-seg';
+
+            var original = document.getElementById('original-image');
+            original.src = data.upload_image;
+            PlantUI.showImage(original);
+
+            var result = document.getElementById('result-image');
+            result.src = data.result_base64;
+            PlantUI.showImage(result);
+
+            var varietyColors = {
+                '霞多丽': 'rgb(255, 100, 100)',
+                '灰皮诺': 'rgb(100, 255, 100)',
+                '黑皮诺': 'rgb(100, 100, 255)'
+            };
+            var host = document.getElementById('variety-stats');
+            host.innerHTML = '';
+            var hasVarieties = false;
+            Object.keys(data.class_counts || {}).forEach(function (variety) {
+                var count = data.class_counts[variety];
+                if (!count) return;
+                hasVarieties = true;
+                var color = varietyColors[variety] || 'rgb(128, 128, 128)';
+                var col = document.createElement('div');
+                col.className = 'col-md-4';
+                col.innerHTML =
+                    '<div class="variety-card">' +
+                    '<h4>' + count + '</h4>' +
+                    '<p><span class="variety-color-indicator" style="background:' + color + ';"></span>' +
+                    PlantUI.escapeHtml(variety) + '</p>' +
+                    '</div>';
+                host.appendChild(col);
+            });
+            if (hasVarieties) {
+                document.getElementById('variety-distribution').style.display = 'block';
+                document.querySelectorAll('.variety-card').forEach(function (card, index) {
+                    card.classList.add('plant-enter');
+                    card.style.setProperty('--plant-delay', (index * 80) + 'ms');
+                });
+            }
+
+            var resultCard = document.getElementById('result-card');
+            resultCard.style.display = 'block';
+            PlantUI.enter(['#result-card'], 40);
+        },
+        onError: function () {
+            document.getElementById('grape-count').textContent = '0';
+        }
+    });
+</script>
+
+</body>
+
+</html>

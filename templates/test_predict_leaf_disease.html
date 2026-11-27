@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>叶片病害分割与识别 - 植物智能识别系统</title>
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/vendor/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/plant-ui.css">
+    <script src="/static/js/echarts.js" charset="utf-8"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.98) !important;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .navbar-brand i { font-size: 1.8rem; }
+        .nav-link { color: #333 !important; font-weight: 500; border-radius: 10px; transition: all .25s; }
+        .nav-link:hover, .nav-link.active { background: rgba(102, 126, 234, .1); color: #667eea !important; }
+        .main-container { padding: 2rem 0 3rem; }
+        .page-title-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 1.6rem 2rem;
+            margin-bottom: 1.4rem;
+            box-shadow: 0 14px 40px rgba(31, 41, 55, .14);
+        }
+        .page-title-card h3 { margin: 0; font-weight: 800; }
+        .page-title-card h3 i { color: #667eea; margin-right: .4rem; }
+        .page-title-card p { margin: .45rem 0 0; color: #6b7280; }
+        .upload-card, .result-card, .instruction-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 1.8rem;
+            box-shadow: 0 14px 40px rgba(31, 41, 55, .12);
+            margin-bottom: 1.4rem;
+        }
+        .upload-label { font-weight: 700; font-size: 1.05rem; margin-bottom: 1rem; }
+        .btn-submit {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: 0;
+            color: #fff;
+            font-weight: 700;
+            padding: .68rem 1.5rem;
+            border-radius: 12px;
+        }
+        .btn-browse {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: 0;
+            color: #fff;
+            font-weight: 700;
+            padding: .68rem 1.5rem;
+            border-radius: 12px;
+        }
+        .file-input-group { display: flex; gap: .8rem; flex-wrap: wrap; }
+        .file-input-group .form-control { flex: 1 1 320px; border-radius: 12px; min-height: 46px; }
+        .stat-box {
+            background: linear-gradient(135deg, #f8faff 0%, #eef1ff 100%);
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: center;
+            height: 100%;
+        }
+        .stat-box h2 { font-size: 1.4rem; font-weight: 800; margin: 0; color: #4c5bd4; }
+        .stat-box p { margin: .35rem 0 0; color: #6b7280; font-size: .85rem; }
+        .info-card {
+            background: #f8faff;
+            border-radius: 16px;
+            padding: 1rem 1.2rem;
+            height: 100%;
+        }
+        .info-card h6 { color: #4b5563; font-weight: 700; margin-bottom: .6rem; }
+        .info-card p { color: #4b5563; margin: 0; line-height: 1.75; }
+        .info-card ul { margin: 0; padding-left: 1.15rem; color: #4b5563; }
+        .info-card li { margin-bottom: .35rem; line-height: 1.65; }
+        .image-box img {
+            width: 100%;
+            border-radius: 14px;
+            background: #f8fafc;
+            max-height: 360px;
+            object-fit: contain;
+        }
+        .image-box h6 { color: #4b5563; font-weight: 700; margin-bottom: .6rem; }
+        .cm-chart { width: 100%; height: 340px; }
+        .cm-chart.species { height: 300px; }
+        .instruction-card h4 { font-weight: 800; margin-bottom: 1rem; }
+        .instruction-step { display: flex; gap: .9rem; align-items: flex-start; }
+        .step-number {
+            width: 2rem; height: 2rem; flex: 0 0 2rem; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; display: grid; place-items: center; font-weight: 800;
+        }
+        .step-content h5 { font-size: 1rem; font-weight: 700; margin: 0 0 .25rem; }
+        .step-content p { color: #6b7280; margin: 0; font-size: .9rem; }
+        .pair-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: .55rem .8rem; border-radius: 12px; background: #fff;
+            border: 1px solid rgba(102,126,234,.18); margin-bottom: .5rem;
+        }
+        .pair-row .rank {
+            width: 1.6rem; height: 1.6rem; border-radius: 50%; display: grid; place-items: center;
+            background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+            font-size: .8rem; font-weight: 700; margin-right: .7rem; flex: 0 0 1.6rem;
+        }
+        .pair-row .p-name { font-weight: 700; color: #374151; }
+        .pair-row .p-en { color: #9aa3b2; font-size: .8rem; margin-left: .35rem; }
+        .pair-row .p-val { font-weight: 800; color: #4c5bd4; }
+        .footer { text-align: center; color: rgba(255,255,255,.8); padding: 1.2rem 0; }
+        .alert-slot { margin-bottom: 1rem; }
+        @media (max-width: 768px) {
+            .page-title-card { padding: 1.2rem 1.3rem; }
+            .upload-card, .result-card, .instruction-card { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-flower1"></i> 植物智能识别系统</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="bi bi-grid-fill"></i> 仪表板</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="classificationDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-tags-fill"></i> 分类识别
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="classificationDropdown">
+                        <li><a class="dropdown-item" href="/grape/test_predict_grape"><i class="bi bi-circle-fill"></i> 葡萄病害识别</a></li>
+                        <li><a class="dropdown-item" href="/mango_variety/test_predict_mango_variety"><i class="bi bi-basket-fill"></i> 芒果品种识别</a></li>
+                        <li><a class="dropdown-item" href="/mango_leaf/test_predict_mango_leaf"><i class="bi bi-tree-fill"></i> 芒果叶片病害识别</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle active" href="#" id="segmentationDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-bounding-box"></i> 图像分割
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="segmentationDropdown">
+                        <li><a class="dropdown-item" href="/grape_segment/test_predict_grape_segment"><i class="bi bi-bounding-box-circles"></i> 葡萄果实分割识别</a></li>
+                        <li><a class="dropdown-item active" href="/leaf_disease/test_predict"><i class="bi bi-magic"></i> 叶片病害分割与识别</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/upload"><i class="bi bi-cloud-upload"></i> 我的记录</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main class="main-container">
+    <div class="container">
+        <div class="page-title-card">
+            <h3><i class="bi bi-magic"></i> 叶片病害分割与识别</h3>
+            <p>UNet++ 定位病灶区域并给出病斑面积与个数，DINOv2 双头模型基于<strong>整叶原图</strong>判断叶片物种与病害类型</p>
+            <div class="model-badge-row" style="margin-top:.75rem;margin-bottom:0;">
+                {% if model_status.segment_exists and model_status.classifier_exists %}
+                <span class="model-chip is-success"><i class="bi bi-check-circle"></i> 分割 / 分类权重已就绪</span>
+                {% else %}
+                <span class="model-chip"><i class="bi bi-exclamation-triangle"></i> 权重未就绪，请先运行 train/LeafDiseaseSegmentAndClassify.ipynb</span>
+                {% endif %}
+                <span class="model-chip"><i class="bi bi-cpu"></i> {{ model_status.device }}</span>
+                {% if model_status.species %}
+                <span class="model-chip"><i class="bi bi-tags"></i> {{ model_status.species|length }} 个物种 / {{ model_status.diseases|length }} 种病害</span>
+                <span class="model-chip" title="UNet++ + {{ model_status.segment_backbone }}"><i class="bi bi-diagram-3"></i> UNet++ · {{ model_status.segment_name or model_status.segment_backbone }}</span>
+                <span class="model-chip" title="{{ model_status.classifier_backbone }}"><i class="bi bi-layers"></i> {{ model_status.classifier_name or model_status.classifier_backbone }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="alert-slot" id="alert-slot"></div>
+
+        <div class="upload-card">
+            <div class="upload-label"><i class="bi bi-cloud-arrow-up-fill"></i> 上传待诊断叶片图像</div>
+            <div class="file-input-group">
+                <input id="location" class="form-control" placeholder="请选择图片文件..." readonly onclick="document.getElementById('i-file').click();">
+                <button type="button" class="btn-browse" onclick="document.getElementById('i-file').click();">
+                    <i class="bi bi-folder2-open"></i> 浏览文件
+                </button>
+                <button type="button" class="btn-submit" id="submit">
+                    <i class="bi bi-send-fill"></i> 开始诊断
+                </button>
+            </div>
+            <input type="file" id="i-file" name="file" accept=".png,.jpg,.jpeg" style="display:none"
+                   onchange="document.getElementById('location').value = this.files.length ? this.files[0].name : '';">
+            <div class="drop-hint"><i class="bi bi-hand-index-thumb"></i> 支持点击选择或直接拖拽图片 · PNG / JPG / JPEG · 最大 20MB</div>
+        </div>
+
+        <div class="result-card" id="result-card" style="display:none;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-clipboard-data-fill"></i> 诊断结果</h5>
+                <div id="model-badge" class="model-badge-row mb-0"></div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-6 col-lg mb-2">
+                    <div class="stat-box"><h2 id="species-result">-</h2><p>叶片物种</p></div>
+                </div>
+                <div class="col-6 col-lg mb-2">
+                    <div class="stat-box"><h2 id="disease-result">-</h2><p>病害类型</p></div>
+                </div>
+                <div class="col-6 col-lg mb-2">
+                    <div class="stat-box"><h2 id="joint-confidence">-</h2><p>联合置信度</p></div>
+                </div>
+                <div class="col-6 col-lg mb-2">
+                    <div class="stat-box"><h2 id="lesion-ratio">-</h2><p>病灶面积占比</p></div>
+                </div>
+                <div class="col-6 col-lg mb-2">
+                    <div class="stat-box"><h2 id="lesion-count">-</h2><p>病斑数量</p></div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-lg-5 mb-2">
+                    <div class="info-card">
+                        <h6><i class="bi bi-list-ol"></i> 候选组合（物种 + 病害）</h6>
+                        <div id="pair-list"><p>-</p></div>
+                    </div>
+                </div>
+                <div class="col-lg-7 mb-2">
+                    <div class="info-card">
+                        <h6><i class="bi bi-virus"></i> 病因</h6>
+                        <p id="cause-text">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-lg-12">
+                    <div class="info-card">
+                        <h6><i class="bi bi-shield-check"></i> 防治方案</h6>
+                        <ul id="advice-list"><li>-</li></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-4 mb-3">
+                    <div class="image-box"><h6><i class="bi bi-image"></i> 原始图像</h6><img id="upload-image" alt="原始图像"></div>
+                </div>
+                <div class="col-lg-4 mb-3">
+                    <div class="image-box"><h6><i class="bi bi-bounding-box"></i> 病灶 Mask</h6><img id="mask-image" alt="病灶 Mask"></div>
+                </div>
+                <div class="col-lg-4 mb-3">
+                    <div class="image-box"><h6><i class="bi bi-diagram-3"></i> 分割叠加</h6><img id="overlay-image" alt="分割叠加"></div>
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="col-lg-4 mb-3">
+                    <div class="image-box"><h6><i class="bi bi-bar-chart-line"></i> 物种概率</h6><div id="species-chart" class="cm-chart species"></div></div>
+                </div>
+                <div class="col-lg-8 mb-3">
+                    <div class="image-box"><h6><i class="bi bi-bar-chart-line"></i> 病害概率</h6><div id="disease-chart" class="cm-chart"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="instruction-card">
+            <h4><i class="bi bi-info-circle-fill"></i> 识别流程</h4>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="instruction-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content"><h5>上传整叶图片</h5><p>尽量拍到完整叶片，背景简单更准</p></div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="instruction-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content"><h5>病灶分割</h5><p>UNet++ 输出病斑 mask、面积占比与个数</p></div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="instruction-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content"><h5>整叶分类</h5><p>双头模型输出物种与病害，只在合法组合内归一化</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="footer">&copy; 2024 植物智能识别系统 | 基于深度学习的植物病害诊断平台</footer>
+
+<script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="/static/js/plant-ui.js"></script>
+<script>
+    PlantUI.checkLogin();
+
+    function renderPairs(pairs) {
+        var box = document.getElementById('pair-list');
+        if (!pairs || !pairs.length) {
+            box.innerHTML = '<p class="mb-0">-</p>';
+            return;
+        }
+        box.innerHTML = pairs.map(function (item, index) {
+            var en = item.disease && item.disease !== item.disease_cn
+                ? '<span class="p-en">' + PlantUI.escapeHtml(item.disease) + '</span>' : '';
+            return '<div class="pair-row">' +
+                '<div class="d-flex align-items-center">' +
+                    '<span class="rank">' + (index + 1) + '</span>' +
+                    '<span class="p-name">' + PlantUI.escapeHtml(item.species_cn || item.species) +
+                    ' · ' + PlantUI.escapeHtml(item.disease_cn || item.disease) + '</span>' + en +
+                '</div>' +
+                '<span class="p-val">' + Number(item.probability || 0).toFixed(1) + '%</span>' +
+                '</div>';
+        }).join('');
+    }
+
+    PlantUI.bindUpload({
+        endpoint: '/leaf_disease/submit_and_predict',
+        preview: '#upload-image',
+        loadingText: '分割与识别中…',
+        successText: '诊断完成',
+        onSuccess: function (data, elapsed) {
+            document.getElementById('result-card').style.display = 'block';
+            document.getElementById('alert-slot').innerHTML = '';
+
+            document.getElementById('species-result').textContent = data.species_cn || data.species || '-';
+            document.getElementById('disease-result').textContent = data.disease_cn || data.disease || '-';
+            document.getElementById('joint-confidence').textContent = Number(data.joint_confidence || 0).toFixed(1) + '%';
+            document.getElementById('lesion-ratio').textContent = Number(data.lesion_ratio || 0).toFixed(1) + '%';
+            document.getElementById('lesion-count').textContent = Number(data.lesion_count || 0);
+            document.getElementById('cause-text').textContent = data.cause || '暂无该病害的详细病因说明。';
+            renderPairs(data.top_pairs);
+
+            var adviceList = document.getElementById('advice-list');
+            adviceList.innerHTML = '';
+            (data.advice || ['建议结合当地农技部门建议进行防治。']).forEach(function (item) {
+                var li = document.createElement('li');
+                li.textContent = item;
+                adviceList.appendChild(li);
+            });
+
+            var original = document.getElementById('upload-image');
+            original.src = data.upload_image;
+            PlantUI.showImage(original);
+
+            var mask = document.getElementById('mask-image');
+            mask.src = data.mask_base64;
+            PlantUI.showImage(mask);
+
+            var overlay = document.getElementById('overlay-image');
+            overlay.src = data.overlay_base64;
+            PlantUI.showImage(overlay);
+
+            document.getElementById('model-badge').innerHTML =
+                '<span class="model-chip is-success"><i class="bi bi-stopwatch"></i>' + Math.round(elapsed || data.elapsed_ms || 0) + ' ms</span>';
+
+            var speciesValues = data.species_probs || [];
+            PlantUI.probabilityChart(document.getElementById('species-chart'), {
+                title: '叶片物种概率',
+                labels: data.species_labels || [],
+                labelsEn: data.species_labels_raw || [],
+                values: speciesValues,
+                topIndex: speciesValues.indexOf(Math.max.apply(null, speciesValues)),
+                rotate: 0
+            });
+
+            var diseaseValues = data.disease_probs || [];
+            PlantUI.probabilityChart(document.getElementById('disease-chart'), {
+                title: '病害类型概率',
+                labels: data.disease_labels_cn || data.disease_labels || [],
+                labelsEn: data.disease_labels || [],
+                values: diseaseValues,
+                topIndex: diseaseValues.indexOf(Math.max.apply(null, diseaseValues)),
+                rotate: 35
+            });
+
+            PlantUI.enter(['#result-card'], 40);
+        },
+        onError: function (error) {
+            var message = error && error.message ? error.message : '诊断失败，请稍后重试';
+            document.getElementById('alert-slot').innerHTML =
+                '<div class="alert alert-warning mb-0" style="border-radius:16px;background:#fff8e6;border-color:#ffe1a8;">' +
+                '<i class="bi bi-exclamation-triangle"></i> ' + PlantUI.escapeHtml(message) +
+                '<div class="small mt-1 text-muted">若提示权重缺失，请先运行 train/LeafDiseaseSegmentAndClassify.ipynb 训练，' +
+                '把生成的 .pth 放进 models/ 目录。</div></div>';
+            document.getElementById('species-result').textContent = '-';
+            document.getElementById('disease-result').textContent = '-';
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <title>芒果叶片病害识别 - 植物智能识别系统</title>
+    <meta content="" name="description">
+    <meta content="" name="keywords">
+
+    <link href="/static/assets/img/favicon.png" rel="icon">
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/vendor/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/plant-ui.css">
+    <script src="/static/js/echarts.js" charset="utf-8"></script>
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景粒子 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float-particle 15s infinite ease-in-out;
+        }
+
+        @keyframes float-particle {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translate(100px, -100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.98) !important;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-brand i {
+            font-size: 2rem;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-link {
+            color: #333 !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 10px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea !important;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: var(--primary-gradient);
+            color: white !important;
+            -webkit-text-fill-color: white;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown-menu {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .dropdown-item {
+            border-radius: 10px;
+            padding: 10px 15px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item i {
+            font-size: 1rem;
+            width: 20px;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .dropdown-item.active {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        /* 主容器 */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            padding: 2rem 0 3rem 0;
+        }
+
+        /* 页面标题卡片 */
+        .page-title-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-title-card h3 {
+            background: var(--warning-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 上传卡片 */
+        .upload-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease-out 0.1s backwards;
+        }
+
+        .upload-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-input-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .form-control {
+            flex: 1;
+            min-width: 250px;
+            padding: 0.8rem 1.2rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .btn-browse {
+            background: var(--warning-gradient);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 15px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-browse:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.4);
+        }
+
+        .btn-submit {
+            background: var(--success-gradient);
+            border: none;
+            padding: 0.8rem 2.5rem;
+            border-radius: 15px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(17, 153, 142, 0.4);
+        }
+
+        /* 结果卡片 */
+        .result-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            height: 100%;
+            animation: slideUp 0.6s ease-out 0.2s backwards;
+        }
+
+        .result-card h5 {
+            background: var(--warning-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        #upload_test_image {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            display: none;
+        }
+
+        #predict_class {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border-left: 4px solid;
+        }
+
+        .info-box h5 {
+            background: var(--warning-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .info-box p, .info-box span {
+            color: #495057;
+            line-height: 1.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box strong {
+            color: #2c3e50;
+        }
+
+        /* 使用说明 */
+        .instruction-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            margin-top: 3rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease-out 0.3s backwards;
+        }
+
+        .instruction-card h4 {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .instruction-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--warning-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-content h5 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-content p {
+            color: #666;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* 页脚 */
+        .footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 2rem 0;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 3rem;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .file-input-group {
+                flex-direction: column;
+            }
+
+            .form-control {
+                width: 100%;
+            }
+
+            #upload_test_image {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 动态背景粒子 -->
+    <div class="particles" id="particles"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-flower1"></i> 植物智能识别系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-grid-fill"></i> 仪表板
+                        </a>
+                    </li>
+                    <!-- 分类识别下拉菜单 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="classificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-tags-fill"></i> 分类识别
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="classificationDropdown">
+                            <li><a class="dropdown-item" href="/grape/test_predict_grape">
+                                <i class="bi bi-circle-fill"></i> 葡萄病害识别
+                            </a></li>
+                            <li><a class="dropdown-item" href="/mango_variety/test_predict_mango_variety">
+                                <i class="bi bi-basket-fill"></i> 芒果品种识别
+                            </a></li>
+                            <li><a class="dropdown-item active" href="/mango_leaf/test_predict_mango_leaf">
+                                <i class="bi bi-tree-fill"></i> 芒果叶片病害识别
+                            </a></li>
+                        </ul>
+                    </li>
+                    <!-- 图像分割下拉菜单 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="segmentationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bounding-box"></i> 图像分割
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="segmentationDropdown">
+                            <li><a class="dropdown-item" href="/grape_segment/test_predict_grape_segment">
+                                <i class="bi bi-bounding-box-circles"></i> 葡萄果实分割识别
+                            </a></li>
+                            <li><a class="dropdown-item" href="/leaf_disease/test_predict">
+                                <i class="bi bi-magic"></i> 叶片病害分割与识别
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> 我的记录
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+        <div class="container">
+            <!-- 页面标题 -->
+            <div class="page-title-card">
+                <h3>
+                    <i class="bi bi-leaf-fill"></i>
+                    芒果叶片病害识别
+                </h3>
+            </div>
+
+            <!-- 上传区域 -->
+            <div class="upload-card">
+                <div class="upload-label">
+                    <i class="bi bi-cloud-upload-fill"></i>
+                    上传待测试芒果叶片图像
+                </div>
+                <div class="file-input-group">
+                    <input id='location' class="form-control" placeholder="请选择图片文件..." readonly onclick="document.getElementById('i-file').click();">
+                    <button class="btn-browse" onclick="document.getElementById('i-file').click();">
+                        <i class="bi bi-folder2-open"></i> 浏览文件
+                    </button>
+                    <button class="btn-submit" id="submit">
+                        <i class="bi bi-send-fill"></i> 提交预测
+                    </button>
+                </div>
+                <input type="file" name="file" id='i-file' accept=".png, .jpg, .jpeg"
+                       onchange="document.getElementById('location').value = this.files.length ? this.files[0].name : '';" style="display: none">
+                <div class="drop-hint">
+                    <i class="bi bi-hand-index-thumb"></i>
+                    支持点击选择或直接拖拽图片到本区域 · PNG / JPG / JPEG · 最大 20MB
+                </div>
+            </div>
+
+            <!-- 结果展示区域 -->
+            <div class="row result-row">
+                <!-- 左侧：图片和预测结果 -->
+                <div class="col-lg-6 mb-4">
+                    <div class="result-card media-panel">
+                        <h5><i class="bi bi-image-fill"></i> 上传图像</h5>
+                        <img id="upload_test_image" alt="上传的芒果叶片图像">
+                        <p id="predict_class" style="margin-top: 15px; font-size: 1.3rem; font-weight: bold; text-align: center;"></p>
+                    </div>
+                </div>
+
+                <!-- 右侧：概率分布图表 -->
+                <div class="col-lg-6 mb-4">
+                    <div class="result-card chart-panel">
+                        <div id="main1">
+                            <div class="chart-loading">
+                                <i class="bi bi-bar-chart-line"></i> 上传图片后展示模型输出的真实概率分布
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部信息卡片 -->
+            <div class="row">
+                <!-- 病害信息报告 -->
+                <div class="col-lg-6 mb-4">
+                    <div class="result-card">
+                        <div id="report"></div>
+                    </div>
+                </div>
+
+                <!-- 防治方案 -->
+                <div class="col-lg-6 mb-4">
+                    <div class="result-card">
+                        <div id="treatment"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 使用说明 -->
+            <div class="instruction-card">
+                <h4>
+                    <i class="bi bi-info-circle-fill"></i>
+                    使用说明
+                </h4>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="instruction-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h5>上传图像</h5>
+                                <p>点击上传区域选择芒果叶片图像</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="instruction-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h5>智能识别</h5>
+                                <p>系统自动识别并分类病害类型</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="instruction-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h5>查看结果</h5>
+                                <p>获取病害类型、面积和可视化结果</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <p>&copy; 2024 植物智能识别系统 | 基于深度学习的植物病害诊断平台</p>
+    </footer>
+
+    <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="/static/js/plant-ui.js"></script>
+<script>
+    PlantUI.checkLogin();
+
+    PlantUI.bindUpload({
+        endpoint: '/mango_leaf/submit_and_predict_mango_leaf',
+        preview: '#upload_test_image',
+        loadingText: 'MDCN 模型推理中…',
+        successText: '识别完成',
+        onSuccess: function (data) {
+            var image = document.getElementById('upload_test_image');
+            image.src = data.upload_image;
+            image.onload = function () { PlantUI.resizeChart(document.getElementById('main1')); };
+            PlantUI.showImage(image);
+
+            var title = '预测结果：<span style="color:#e0447a;font-weight:800;">' +
+                PlantUI.escapeHtml(data.predict) + '</span>';
+            if (data.predict_en) {
+                title += ' <span style="font-size:.72em;color:#8a94a6;">(' +
+                    PlantUI.escapeHtml(data.predict_en) + ')</span>';
+            }
+            document.getElementById('predict_class').innerHTML = title;
+
+            imgReport(data);
+            treatmentAdvice(data);
+
+            var values = data.pred_pros.map(function (p) { return +(p * 100).toFixed(2); });
+            var topIndex = data.pred_pros.indexOf(Math.max.apply(null, data.pred_pros));
+            PlantUI.probabilityChart(document.getElementById('main1'), {
+                title: '模型预测不同病害的概率分布',
+                labels: data.disease_labels,
+                labelsEn: data.disease_labels_en,
+                values: values,
+                topIndex: topIndex,
+                rotate: 32
+            });
+
+            PlantUI.enter(['#report .info-box', '#treatment .info-box'], 60);
+        },
+        onError: function () {
+            document.getElementById('predict_class').textContent = '识别失败，请重试';
+            document.getElementById('main1').innerHTML =
+                '<div class="chart-loading"><i class="bi bi-exclamation-circle"></i> 模型未返回结果</div>';
+        }
+    });
+
+    function imgReport(data) {
+        var confidence = Number(data.confidence || 0).toFixed(2);
+        var html = "<div class='info-box' style='border-left-color:#f093fb;'>";
+        html += "<h5><i class='bi bi-file-earmark-text-fill'></i> 病害信息报告</h5>";
+        html += "<p><strong>图片名称：</strong>" + PlantUI.escapeHtml((data.upload_image || '').split('/').pop()) + "</p>";
+        html += "<p><strong>诊断结果：</strong>" + PlantUI.escapeHtml(data.predict) +
+            (data.predict_en ? " <span style='color:#8a94a6'>(" + PlantUI.escapeHtml(data.predict_en) + ")</span>" : "") + "</p>";
+        html += "<p><strong>置信度：</strong>" + confidence + "%</p>";
+        html += "<p><strong>病害描述：</strong></p><p>" + PlantUI.escapeHtml(data.description) + "</p>";
+        html += "</div>";
+        document.getElementById('report').innerHTML = html;
+    }
+
+    function treatmentAdvice(data) {
+        var html = "<div class='info-box' style='border-left-color:#11998e;'>";
+        html += "<h5><i class='bi bi-capsule-pill'></i> 防治方案</h5>";
+        if (data.advice && data.advice.length) {
+            html += "<ul style='margin:0;padding-left:1.2rem;'>";
+            data.advice.forEach(function (item) {
+                html += "<li style='margin-bottom:.45rem;'>" + PlantUI.escapeHtml(item) + "</li>";
+            });
+            html += "</ul>";
+        } else {
+            html += "<p>暂无防治建议</p>";
+        }
+        html += "</div>";
+        document.getElementById('treatment').innerHTML = html;
+    }
+</script>
+
+</body>
+
+</html>

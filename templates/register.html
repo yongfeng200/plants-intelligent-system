@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册账户 - 植物智能识别系统</title>
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/vendor/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/plant-ui.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景 */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .shape-1 {
+            width: 250px;
+            height: 250px;
+            background: #fff;
+            top: 15%;
+            left: 15%;
+            animation-delay: 0s;
+        }
+
+        .shape-2 {
+            width: 180px;
+            height: 180px;
+            background: #fff;
+            top: 65%;
+            right: 10%;
+            animation-delay: 4s;
+        }
+
+        .shape-3 {
+            width: 120px;
+            height: 120px;
+            background: #fff;
+            bottom: 15%;
+            left: 25%;
+            animation-delay: 8s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.1); }
+            50% { transform: translate(-20px, 20px) scale(0.9); }
+            75% { transform: translate(20px, 30px) scale(1.05); }
+        }
+
+        /* 主容器 */
+        .register-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px;
+        }
+
+        /* 卡片 */
+        .register-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            padding: 50px 40px;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+
+        /* 头部 */
+        .register-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .logo-icon i {
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(46, 204, 113, 0); }
+        }
+
+        .register-header h2 {
+            font-size: 2rem;
+            font-weight: bold;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .register-header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        /* 表单 */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group-custom {
+            position: relative;
+        }
+
+        .input-group-custom i {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #2ecc71;
+            font-size: 1.2rem;
+            z-index: 2;
+        }
+
+        .form-control-custom {
+            width: 100%;
+            padding: 15px 20px 15px 55px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .form-control-custom:focus {
+            outline: none;
+            border-color: #2ecc71;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.1);
+        }
+
+        /* 密码强度指示器 */
+        .password-strength {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s;
+        }
+
+        .strength-weak { background: #e74c3c; width: 33%; }
+        .strength-medium { background: #f39c12; width: 66%; }
+        .strength-strong { background: #2ecc71; width: 100%; }
+
+        .password-hint {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        /* 按钮 */
+        .btn-register {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4);
+        }
+
+        .btn-register:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-register:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 链接 */
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+        }
+
+        .login-link a {
+            color: #2ecc71;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .login-link a:hover {
+            color: #27ae60;
+            text-decoration: underline;
+        }
+
+        /* 提示消息 */
+        .alert-custom {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* 进度指示器 */
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 0;
+        }
+
+        .step {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            color: #999;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .step.active .step-circle {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.2);
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .step.active .step-label {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+
+        /* 响应式 */
+        @media (max-width: 576px) {
+            .register-card {
+                padding: 40px 25px;
+            }
+
+            .register-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .back-btn {
+                top: 20px;
+                left: 20px;
+                width: 45px;
+                height: 45px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 动态背景 -->
+    <div class="bg-animation">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+    </div>
+
+    <!-- 返回按钮 -->
+    <button class="back-btn" onclick="window.location.href='/'">
+        <i class="bi bi-arrow-left"></i>
+    </button>
+
+    <!-- 主容器 -->
+    <div class="register-container">
+        <div class="register-card">
+            <!-- 头部 -->
+            <div class="register-header">
+                <div class="logo-icon">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+                <h2>创建新账户</h2>
+                <p>加入我们，开启智能识别之旅</p>
+            </div>
+
+            <!-- 进度指示器 -->
+            <div class="progress-steps">
+                <div class="step active">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">账户信息</div>
+                </div>
+                <div class="step">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">完成注册</div>
+                </div>
+            </div>
+
+            <!-- 提示消息 -->
+            <div id="alert-success" class="alert-custom alert-success">
+                <i class="bi bi-check-circle me-2"></i><span id="success-msg"></span>
+            </div>
+            <div id="alert-error" class="alert-custom alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i><span id="error-msg"></span>
+            </div>
+
+            <!-- 注册表单 -->
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-person"></i> 用户名
+                    </label>
+                    <div class="input-group-custom">
+                        <i class="bi bi-person-circle"></i>
+                        <input type="text" id="username" class="form-control-custom"
+                               placeholder="请输入用户名（4-20个字符）" required minlength="4" maxlength="20">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-envelope"></i> 邮箱（可选）
+                    </label>
+                    <div class="input-group-custom">
+                        <i class="bi bi-envelope"></i>
+                        <input type="email" id="email" class="form-control-custom"
+                               placeholder="请输入邮箱地址">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-lock"></i> 密码
+                    </label>
+                    <div class="input-group-custom">
+                        <i class="bi bi-shield-lock"></i>
+                        <input type="password" id="password" class="form-control-custom"
+                               placeholder="请输入密码（至少6个字符）" required minlength="6">
+                    </div>
+                    <div class="password-strength" id="passwordStrength">
+                        <div class="password-strength-bar" id="strengthBar"></div>
+                    </div>
+                    <div class="password-hint">密码强度：<span id="strengthText">请输入密码</span></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="bi bi-check-circle"></i> 确认密码
+                    </label>
+                    <div class="input-group-custom">
+                        <i class="bi bi-shield-check"></i>
+                        <input type="password" id="confirmPassword" class="form-control-custom"
+                               placeholder="请再次输入密码" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-register" id="registerBtn">
+                    <i class="bi bi-check-lg me-2"></i>立即注册
+                </button>
+            </form>
+
+            <div class="login-link">
+                已有账户？<a href="/">立即登录</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/vendor/jquery/jquery.min.js"></script>
+    <script>
+        // 显示提示消息
+        function showAlert(type, message) {
+            const alertId = type === 'success' ? '#alert-success' : '#alert-error';
+            const msgId = type === 'success' ? '#success-msg' : '#error-msg';
+
+            $(msgId).text(message);
+            $(alertId).fadeIn();
+
+            setTimeout(() => {
+                $(alertId).fadeOut();
+            }, 4000);
+        }
+
+        // 更新进度步骤
+        function updateStep(step) {
+            $('.step').removeClass('active');
+            $(`.step:nth-child(${step})`).addClass('active');
+        }
+
+        // 密码强度检测
+        $('#password').on('input', function() {
+            const password = $(this).val();
+            const strength = $('#passwordStrength');
+            const bar = $('#strengthBar');
+            const text = $('#strengthText');
+
+            if (password.length === 0) {
+                strength.hide();
+                text.text('请输入密码');
+                return;
+            }
+
+            strength.show();
+            bar.removeClass('strength-weak strength-medium strength-strong');
+
+            let score = 0;
+            if (password.length >= 6) score++;
+            if (password.length >= 10) score++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+            if (/\d/.test(password)) score++;
+            if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+            if (score <= 2) {
+                bar.addClass('strength-weak');
+                text.text('弱').css('color', '#e74c3c');
+            } else if (score <= 4) {
+                bar.addClass('strength-medium');
+                text.text('中等').css('color', '#f39c12');
+            } else {
+                bar.addClass('strength-strong');
+                text.text('强').css('color', '#2ecc71');
+            }
+        });
+
+        // 注册表单提交
+        $('#registerForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const username = $('#username').val().trim();
+            const email = $('#email').val().trim();
+            const password = $('#password').val();
+            const confirmPassword = $('#confirmPassword').val();
+
+            // 验证
+            if (username.length < 4) {
+                showAlert('error', '用户名至少需要4个字符');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('error', '密码至少需要6个字符');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert('error', '两次输入的密码不一致');
+                return;
+            }
+
+            // 禁用按钮
+            $('#registerBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>注册中...');
+            updateStep(2);
+
+            $.ajax({
+                url: '/register',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ username, password, email }),
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', '注册成功！正在跳转到登录页面...');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        $('#registerBtn').prop('disabled', false).html('<i class="bi bi-check-lg me-2"></i>立即注册');
+                        updateStep(1);
+                        showAlert('error', response.error || '注册失败，请重试');
+                    }
+                },
+                error: function(xhr) {
+                    $('#registerBtn').prop('disabled', false).html('<i class="bi bi-check-lg me-2"></i>立即注册');
+                    updateStep(1);
+                    const error = xhr.responseJSON?.error || '网络错误，请稍后重试';
+                    showAlert('error', error);
+                }
+            });
+        });
+
+        // 输入框聚焦效果
+        $('.form-control-custom').on('focus', function() {
+            $(this).parent().find('i').css('color', '#2ecc71');
+        }).on('blur', function() {
+            $(this).parent().find('i').css('color', '#999');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+{
+  "test_accuracy": 0.9742647058823529,
+  "test_loss": 0.09134214920435196,
+  "precision_macro": 0.9516030844155845,
+  "recall_macro": 0.9799851190476191,
+  "f1_macro": 0.9650755679512475,
+  "precision_weighted": 0.975124140565317,
+  "recall_weighted": 0.9742647058823529,
+  "f1_weighted": 0.9744651386855065,
+  "auc_macro": 0.9988771369808389,
+  "per_class": {
+    "Bacterial Rot": {
+      "precision": 0.9090909090909091,
+      "recall": 1.0,
+      "f1": 0.9523809523809523,
+      "support": 10.0
+    },
+    "Downey Mildew": {
+      "precision": 0.96875,
+      "recall": 0.96875,
+      "f1": 0.96875,
+      "support": 96.0
+    },
+    "Healthy Leaves": {
+      "precision": 1.0,
+      "recall": 0.9761904761904762,
+      "f1": 0.9879518072289156,
+      "support": 126.0
+    },
+    "Powdery Mildew": {
+      "precision": 0.9285714285714286,
+      "recall": 0.975,
+      "f1": 0.9512195121951219,
+      "support": 40.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      10,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      93,
+      0,
+      3
+    ],
+    [
+      0,
+      3,
+      123,
+      0
+    ],
+    [
+      1,
+      0,
+      0,
+      39
+    ]
+  ],
+  "class_names": [
+    "Bacterial Rot",
+    "Downey Mildew",
+    "Healthy Leaves",
+    "Powdery Mildew"
+  ],
+  "best_epoch": 14,
+  "best_phase": 2,
+  "best_val_loss": 0.027727069111452216,
+  "best_val_acc": 0.9926739926739927
+}

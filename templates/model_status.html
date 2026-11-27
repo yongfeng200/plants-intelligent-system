@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型状态 - 植物智能识别系统</title>
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/vendor/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/plant-ui.css">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 50px;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+            font-size: 1.5rem;
+        }
+
+        .main-container {
+            padding: 100px 0 50px;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .page-header h2 {
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-header h2 i {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 状态横幅 */
+        .status-banner {
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .status-banner.success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .status-banner.warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .status-icon {
+            font-size: 3rem;
+        }
+
+        .status-content h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.5rem;
+        }
+
+        .status-content p {
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        /* 模型卡片 */
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .model-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .model-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+
+        .model-card.loaded::before {
+            background: linear-gradient(90deg, var(--success-color), #27ae60);
+        }
+
+        .model-card.missing::before {
+            background: linear-gradient(90deg, var(--danger-color), #c0392b);
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 20px;
+        }
+
+        .model-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .model-key {
+            font-size: 0.85rem;
+            color: #999;
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 3px 8px;
+            border-radius: 5px;
+        }
+
+        .status-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge.loaded {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.missing {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .model-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .model-path {
+            font-size: 0.8rem;
+            color: #999;
+            word-break: break-all;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 15px;
+        }
+
+        .model-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-train {
+            flex: 1;
+            padding: 10px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-train:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .btn-docs {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-docs:hover {
+            background: #e9ecef;
+        }
+
+        /* 帮助部分 */
+        .help-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .help-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .help-title i {
+            color: var(--primary-color);
+        }
+
+        .help-steps {
+            counter-reset: step-counter;
+            list-style: none;
+            padding: 0;
+        }
+
+        .help-step {
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 25px;
+        }
+
+        .help-step::before {
+            counter-increment: step-counter;
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .help-step h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .help-step p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background: #2d3436;
+            color: #dfe6e9;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .models-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* ---- 5 张卡时的排版修正：3 列，标题和徽章不再被挤断 ---- */
+        .models-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        @media (max-width: 1200px) {
+            .models-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 768px) {
+            .models-grid { grid-template-columns: 1fr; }
+        }
+
+        .model-header { gap: 12px; }
+        .model-name { line-height: 1.35; }
+        .model-key { display: inline-block; }
+        .status-badge { flex-shrink: 0; white-space: nowrap; }
+        .model-path {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-flower1"></i> 植物智能识别系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-grid-fill"></i> 仪表板
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> 我的记录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/model_status">
+                            <i class="bi bi-cpu"></i> 模型状态
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="container main-container">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h2>
+                <i class="bi bi-cpu"></i>
+                模型加载状态
+            </h2>
+        </div>
+
+        <!-- 状态横幅 -->
+        {% if all_loaded %}
+        <div class="status-banner success">
+            <i class="bi bi-check-circle-fill status-icon"></i>
+            <div class="status-content">
+                <h3>✓ 模型文件已就绪</h3>
+                <p>{{ loaded_count }}/{{ total_count }} 个模型已加载 · 推理设备：{{ device }}</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="status-banner warning">
+            <i class="bi bi-exclamation-triangle-fill status-icon"></i>
+            <div class="status-content">
+                <h3>⚠ 部分模型文件缺失</h3>
+                <p>{{ missing|length }} 个模型文件未找到。缺失的模型会在预测接口返回明确错误，不会使用随机结果。</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 模型卡片 -->
+        <div class="models-grid">
+            {% for model in models %}
+            <div class="model-card {% if model.exists %}loaded{% else %}missing{% endif %} plant-enter"
+                 style="--plant-delay: {{ loop.index0 * 70 }}ms;">
+                <div class="model-header">
+                    <div>
+                        <div class="model-name">{{ model.name }}</div>
+                        <div class="model-key">{{ model.key }}</div>
+                    </div>
+                    <span class="status-badge {% if model.exists %}loaded{% else %}missing{% endif %}">
+                        <i class="bi bi-{% if model.exists %}check-circle-fill{% else %}x-circle-fill{% endif %}"></i>
+                        {{ model.status }}
+                    </span>
+                </div>
+
+                <div class="model-info">
+                    <div class="info-row">
+                        <span class="info-label">网络结构</span>
+                        <span class="info-value">{{ model.architecture }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">{{ model.accuracy_label or '测试准确率' }}</span>
+                        <span class="info-value"
+                              {% if model.accuracy_hint %}title="{{ model.accuracy_hint }}"{% endif %}>{{ model.accuracy_text }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">文件大小</span>
+                        <span class="info-value">{% if model.size_mb %}{{ model.size_mb }} MB{% else %}N/A{% endif %}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">推理设备</span>
+                        <span class="info-value">{{ model.device }}</span>
+                    </div>
+                </div>
+
+                <div class="model-path" title="{{ model.path }}">
+                    <i class="bi bi-folder"></i> {{ model.path }}
+                </div>
+
+                {% if not model.exists %}
+                <div class="model-actions">
+                    <button class="btn-train" onclick="openTrainingGuide('{{ model.key }}')">
+                        <i class="bi bi-play-circle me-2"></i>训练模型
+                    </button>
+                    <button class="btn-docs" onclick="openDocs('{{ model.key }}')">
+                        <i class="bi bi-book"></i>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 帮助部分 -->
+        {% if not all_loaded %}
+        <div class="help-section">
+            <div class="help-title">
+                <i class="bi bi-lightbulb"></i>
+                如何训练模型？
+            </div>
+
+            <ol class="help-steps">
+                <li class="help-step">
+                    <h4>方法一：使用Python脚本训练</h4>
+                    <p>在命令行中运行训练脚本，适合批量训练</p>
+                    <div class="code-block">
+# 训练葡萄病害模型<br>
+python train_grape_disease.py<br>
+<br>
+# 训练芒果叶片病害模型<br>
+python train_mango_leaf_disease.py<br>
+<br>
+# 训练芒果品种识别模型<br>
+python train_mango_variety.py
+                    </div>
+                </li>
+
+                <li class="help-step">
+                    <h4>方法二：使用Jupyter Notebook（推荐）</h4>
+                    <p>交互式训练，可以实时查看训练过程和结果</p>
+                    <div class="code-block">
+# 启动Jupyter Notebook<br>
+jupyter notebook<br>
+<br>
+# 然后打开对应的notebook文件：<br>
+# - GrapeDiseaseTraining.ipynb<br>
+# - MangoLeafDiseaseTraining.ipynb<br>
+# - MangoVarietyTraining.ipynb
+                    </div>
+                </li>
+
+                <li class="help-step">
+                    <h4>方法三：下载预训练模型（如果可用）</h4>
+                    <p>从项目仓库或云存储下载已训练好的模型文件</p>
+                    <div class="code-block">
+# 将模型文件放置到项目 models/ 目录<br>
+# 确保文件名正确：<br>
+# - grape_disease_model.pth<br>
+# - mango_mdcn_best_checkpoint.pth<br>
+# - mango_variety_best_checkpoint.pth<br>
+# - grape_segment_model.pt
+                    </div>
+                </li>
+
+                <li class="help-step">
+                    <h4>检查模型是否加载成功</h4>
+                    <p>训练完成后，刷新此页面或重启服务器</p>
+                    <div class="code-block">
+# 重启 Flask 服务器<br>
+python py/main.py<br>
+<br>
+# 或访问健康检查 API<br>
+curl http://127.0.0.1:5000/health
+                    </div>
+                </li>
+            </ol>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>提示：</strong>训练时间根据硬件配置不同，通常需要30分钟到2小时。使用GPU可以大幅加速训练过程。
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/plant-ui.js"></script>
+    <script>
+        var allLoadedAtRender = {{ 'true' if all_loaded else 'false' }};
+
+        function openTrainingGuide(modelKey) {
+            var guides = {
+                'mango_leaf': '重新训练芒果叶片病害模型：\n\n打开 train/MangoLeafDiseaseMDCNTraining.ipynb，运行全部单元格，生成 models/mango_mdcn_best_checkpoint.pth。',
+                'mango_variety': '重新训练芒果品种模型：\n\n打开 train/MangoVarietyClassificationTraining.ipynb，运行全部单元格，生成 models/mango_variety_best_checkpoint.pth。',
+                'grape_disease': '重新训练葡萄病害模型：\n\n打开 train/GrapeDiseaseTraining.ipynb，运行全部单元格，生成 models/grape_disease_model.pth。',
+                'grape_segment': '重新训练葡萄实例分割模型：\n\n使用 YOLOv8-seg 训练数据集后，将 best.pt 复制为 models/grape_segment_model.pt。'
+            };
+            alert(guides[modelKey] || '请查看 README.md 了解训练说明');
+        }
+
+        function openDocs(modelKey) {
+            alert('请查看项目根目录 README.md 的「功能与模型」章节，了解权重文件、网络结构与预处理说明。');
+        }
+
+        // 文件缺失时每 30 秒检查一次，补齐后自动刷新
+        setInterval(function () {
+            if (allLoadedAtRender) return;
+            fetch('/api/model_status', { cache: 'no-store' })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (data.all_loaded) location.reload();
+                })
+                .catch(function () { /* 忽略网络错误 */ });
+        }, 30000);
+    </script>
+</body>
+</html>

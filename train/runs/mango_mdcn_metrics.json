@@ -1,0 +1,25 @@
+{
+  "test_metrics": {
+    "accuracy": 0.9975,
+    "precision": 0.9975490196078431,
+    "recall": 0.9975,
+    "f1_macro": 0.9974997499749976,
+    "f1_weighted": 0.9974997499749975,
+    "balanced_accuracy": 0.9975,
+    "top2_accuracy": 1.0,
+    "roc_auc_macro": 0.9999928571428571,
+    "roc_auc_weighted": 0.9999928571428572
+  },
+  "best_epoch": 100,
+  "best_val_loss": 0.07172401012179534,
+  "class_to_idx": {
+    "Anthracnose": 0,
+    "Bacterial Canker": 1,
+    "Cutting Weevil": 2,
+    "Die Back": 3,
+    "Gall Midge": 4,
+    "Healthy": 5,
+    "Powdery Mildew": 6,
+    "Sooty Mould": 7
+  }
+}

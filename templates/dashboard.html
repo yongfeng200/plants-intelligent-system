@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仪表板 - 植物智能识别系统</title>
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/vendor/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/plant-ui.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --secondary-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景粒子 */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float-particle 15s infinite ease-in-out;
+        }
+
+        @keyframes float-particle {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translate(100px, -100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.98) !important;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-brand i {
+            font-size: 2rem;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .nav-link {
+            color: #333 !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 10px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea !important;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: var(--primary-gradient);
+            color: white !important;
+            -webkit-text-fill-color: white;
+        }
+
+        /* 主容器 */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            padding: 3rem 0;
+        }
+
+        /* 宽屏下把内容区放宽，默认 1320px 两侧留白太多；想更宽就改这里的数值 */
+        @media (min-width: 1400px) {
+            .main-container {
+                max-width: 1440px;
+            }
+        }
+
+        /* 欢迎卡片 */
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-card h2 {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-card p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        /* 模型卡片网格：增加行间距，避免上下卡片贴合 */
+        .model-grid {
+            --bs-gutter-y: 1rem;
+        }
+
+        .model-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out backwards;
+        }
+
+        .model-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.3) 100%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .model-card:hover::before {
+            opacity: 1;
+        }
+
+        .model-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .model-card:nth-child(1) { animation-delay: 0.1s; }
+        .model-card:nth-child(2) { animation-delay: 0.2s; }
+        .model-card:nth-child(3) { animation-delay: 0.3s; }
+        .model-card:nth-child(4) { animation-delay: 0.4s; }
+        .model-card:nth-child(5) { animation-delay: 0.5s; }
+
+        .model-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 3rem;
+            position: relative;
+            transition: all 0.4s;
+        }
+
+        .model-card:hover .model-icon {
+            transform: rotateY(360deg);
+        }
+
+        .icon-grape { background: var(--primary-gradient); }
+        .icon-mango-leaf { background: var(--warning-gradient); }
+        .icon-mango { background: var(--info-gradient); }
+        .icon-grape-segment { background: var(--success-gradient); }
+        .icon-mango-segment { background: var(--secondary-gradient); }
+        .icon-fruit-detection { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+
+        .model-card h4 {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .model-card p {
+            color: #7f8c8d;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        /* 单个卡片独占整行时改用横向布局：图标在左、内容在右，避免又窄又高 */
+        .model-card-wide {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding: 2rem 2.5rem;
+            margin-bottom: 0;
+        }
+
+        .model-card-wide .model-icon {
+            flex: 0 0 100px;
+            margin: 0;
+        }
+
+        .model-wide-body {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .model-card-wide h4 {
+            margin-bottom: 0.6rem;
+        }
+
+        .model-card-wide p {
+            margin-bottom: 1rem;
+        }
+
+        .model-card-wide .model-badges {
+            margin-bottom: 1.1rem;
+        }
+
+        @media (max-width: 767.98px) {
+            .model-card-wide {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .model-card-wide .model-icon {
+                margin: 0 auto 1rem;
+            }
+        }
+
+        .model-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .badge-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 2px solid;
+        }
+
+        .badge-info {
+            background: rgba(79, 172, 254, 0.1);
+            color: #4facfe;
+            border-color: #4facfe;
+        }
+
+        .badge-success {
+            background: rgba(17, 153, 142, 0.1);
+            color: #11998e;
+            border-color: #11998e;
+        }
+
+        .badge-danger {
+            background: rgba(245, 87, 108, 0.1);
+            color: #f5576c;
+            border-color: #f5576c;
+        }
+
+        .badge-warning {
+            background: rgba(240, 147, 251, 0.1);
+            color: #f093fb;
+            border-color: #f093fb;
+        }
+
+        .badge-primary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-color: #667eea;
+        }
+
+        .badge-secondary {
+            background: rgba(250, 112, 154, 0.1);
+            color: #fa709a;
+            border-color: #fa709a;
+        }
+
+        .card-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+
+        .card-link:hover {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .btn-model {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .card-link:hover .btn-model {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 统计卡片 */
+        .stats-row {
+            margin-top: 2.5rem;
+            animation: slideUp 0.6s ease-out;
+            animation-delay: 0.6s;
+            animation-fill-mode: backwards;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+            height: 100%;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-icon {
+            font-size: 3rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .stat-box h3 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-box p {
+            color: #7f8c8d;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .btn-primary-custom {
+            background: var(--success-gradient);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(17, 153, 142, 0.4);
+        }
+
+        /* 分组标题样式 */
+        .section-title {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            margin-top: 0.5rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .section-title i {
+            font-size: 1.6rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .welcome-card {
+                text-align: center;
+            }
+
+            .welcome-card .row {
+                flex-direction: column;
+            }
+
+            .welcome-card .text-end {
+                text-align: center !important;
+                margin-top: 1rem;
+            }
+
+            .model-card {
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        /* 页脚 */
+        .footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 2rem 0;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- 动态背景粒子 -->
+    <div class="particles" id="particles"></div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-flower1"></i> 植物智能识别系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-grid-fill"></i> 仪表板
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('upload') }}">
+                            <i class="bi bi-cloud-upload"></i> 我的记录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('statistics') }}">
+                            <i class="bi bi-bar-chart-fill"></i> 统计分析
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('model_status') }}">
+                            <i class="bi bi-gear-fill"></i> 模型状态
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ username }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/profile"><i class="bi bi-person"></i> 个人资料</a></li>
+                            <li><a class="dropdown-item" href="/settings"><i class="bi bi-gear"></i> 设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="container main-container">
+        <!-- 欢迎卡片 -->
+        <div class="welcome-card">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2>👋 欢迎回来，{{ username }}！</h2>
+                    <p class="mb-0">选择一个AI模型开始您的智能植物病害识别与诊断之旅</p>
+                    <div id="system-status" class="model-badge-row" style="margin-top:0.9rem;">
+                        <span class="model-chip"><i class="bi bi-arrow-repeat"></i> 正在检查推理服务…</span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-primary-custom" onclick="location.href='/upload'">
+                        <i class="bi bi-clock-history"></i> 查看历史记录
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模型选择卡片 -->
+
+        <!-- 葡萄相关模型 -->
+        <h3 class="section-title">
+            <i class="bi bi-grape"></i> 葡萄智能识别
+        </h3>
+        <div class="row model-grid mb-4">
+            <!-- 葡萄病害识别 -->
+            <div class="col-lg-6 col-md-6">
+                <a href="/grape/test_predict_grape" class="card-link">
+                    <div class="model-card">
+                        <div class="model-icon icon-grape">
+                            <i class="bi bi-circle-fill text-white"></i>
+                        </div>
+                        <h4>🍇 葡萄病害识别</h4>
+                        <p>基于 ResNet50 + CBAM 注意力机制，覆盖 Black Rot、ESCA、Healthy、Leaf Blight 共 4 种葡萄叶片状态，辅助快速筛查。</p>
+                        <div class="model-badges">
+                            <span class="badge-custom badge-info">4 种状态</span>
+                            <span class="badge-custom badge-success">ResNet50 + CBAM</span>
+                            <span class="badge-custom badge-primary">辅助筛查</span>
+                        </div>
+                        <div class="btn-model">
+                            <i class="bi bi-camera-fill"></i> 开始识别
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 葡萄果实分割识别 -->
+            <div class="col-lg-6 col-md-6">
+                <a href="/grape_segment/test_predict_grape_segment" class="card-link">
+                    <div class="model-card">
+                        <div class="model-icon icon-grape-segment">
+                            <i class="bi bi-bounding-box-circles text-white"></i>
+                        </div>
+                        <h4>🍇 葡萄果实分割识别</h4>
+                        <p>基于 YOLOv8-seg 实例分割，自动分割图像中的每颗葡萄并统计 Chardonnay、PinotGris、PinotNoir 数量。</p>
+                        <div class="model-badges">
+                            <span class="badge-custom badge-success">实例分割</span>
+                            <span class="badge-custom badge-secondary">YOLOv8-seg</span>
+                            <span class="badge-custom badge-info">3 个品种</span>
+                        </div>
+                        <div class="btn-model">
+                            <i class="bi bi-bounding-box-circles"></i> 开始分割
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 芒果相关模型 -->
+        <h3 class="section-title">
+            <i class="bi bi-basket"></i> 芒果智能识别
+        </h3>
+        <div class="row model-grid mb-4">
+            <!-- 芒果品种识别 -->
+            <div class="col-lg-6 col-md-6">
+                <a href="/mango_variety/test_predict_mango_variety" class="card-link">
+                    <div class="model-card">
+                        <div class="model-icon icon-mango">
+                            <i class="bi bi-basket-fill text-white"></i>
+                        </div>
+                        <h4>🥭 芒果品种识别</h4>
+                        <p>基于 EfficientNet-B4 架构，覆盖 Anwar Ratool、Chaunsa、Dosehri、Langra、Sindhri 等 8 个芒果品种，辅助品种鉴别。</p>
+                        <div class="model-badges">
+                            <span class="badge-custom badge-primary">8 个品种</span>
+                            <span class="badge-custom badge-info">EfficientNet-B4</span>
+                            <span class="badge-custom badge-success">辅助鉴别</span>
+                        </div>
+                        <div class="btn-model">
+                            <i class="bi bi-camera-fill"></i> 开始识别
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 芒果叶片病害识别 -->
+            <div class="col-lg-6 col-md-6">
+                <a href="/mango_leaf/test_predict_mango_leaf" class="card-link">
+                    <div class="model-card">
+                        <div class="model-icon icon-mango-leaf">
+                            <i class="bi bi-bug-fill text-white"></i>
+                        </div>
+                        <h4>🥭 芒果叶片病害识别</h4>
+                        <p>基于 MDCN（DenseNet-121）架构，覆盖 Anthracnose、Bacterial Canker、Cutting Weevil、Die Back、Gall Midge、Healthy、Powdery Mildew、Sooty Mould 共 8 类叶片状态。</p>
+                        <div class="model-badges">
+                            <span class="badge-custom badge-danger">8 类病害</span>
+                            <span class="badge-custom badge-warning">MDCN · DenseNet-121</span>
+                            <span class="badge-custom badge-primary">辅助诊断</span>
+                        </div>
+                        <div class="btn-model">
+                            <i class="bi bi-camera-fill"></i> 开始识别
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 叶片病害智能诊断 -->
+        <h3 class="section-title">
+            <i class="bi bi-brightness-high"></i> 叶片病害智能诊断
+        </h3>
+        <div class="row model-grid mb-4">
+            <div class="col-12">
+                <a href="/leaf_disease/test_predict" class="card-link">
+                    <div class="model-card model-card-wide" style="border: 3px solid #4facfe;">
+                        <div style="position: absolute; top: 15px; right: 15px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8em; font-weight: bold;">
+                            分割 + 多物种
+                        </div>
+                        <div class="model-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <i class="bi bi-magic text-white"></i>
+                        </div>
+                        <div class="model-wide-body">
+                            <h4>🌿 叶片病害分割与识别</h4>
+                            <p>UNet++ 分割病灶区域并统计病斑面积与个数，DINOv2 ViT-S/14 微调模型基于整叶原图识别 5 种作物、10 类病害。</p>
+                            <div class="model-badges">
+                                <span class="badge-custom badge-info">病灶分割</span>
+                                <span class="badge-custom badge-success">整叶分类</span>
+                                <span class="badge-custom badge-warning">双头模型</span>
+                                <span class="badge-custom badge-danger">Mask 可视化</span>
+                            </div>
+                            <div class="btn-model" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <i class="bi bi-magic"></i> 开始诊断
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 系统统计 -->
+        <div class="row stats-row">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-box">
+                    <div class="stat-icon">
+                        <i class="bi bi-cpu-fill"></i>
+                    </div>
+                    <h3 id="stat-models">{{ model_count }}</h3>
+                    <p>神经网络</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-box">
+                    <div class="stat-icon">
+                        <i class="bi bi-diagram-3-fill"></i>
+                    </div>
+                    <h3 id="stat-classes">{{ class_count }}</h3>
+                    <p>覆盖识别类别</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-box">
+                    <div class="stat-icon">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                    <h3 id="stat-tasks">{{ ability_count }}</h3>
+                    <p>AI 识别能力</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stat-box">
+                    <div class="stat-icon">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <h3 id="stat-device">{{ device_label }}</h3>
+                    <p>推理设备</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <div class="footer">
+        <p>&copy; 2024 植物智能识别系统 | 基于深度学习的植物病害诊断平台</p>
+        <div>
+            <a href="#"><i class="bi bi-github"></i> GitHub</a>
+            <a href="#"><i class="bi bi-file-earmark-text"></i> 文档</a>
+            <a href="#"><i class="bi bi-envelope"></i> 联系我们</a>
+        </div>
+    </div>
+
+    <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/plant-ui.js"></script>
+    <script>
+        (function () {
+            var statusHost = document.getElementById('system-status');
+
+            // 模型卡片依次浮现，避免所有卡片同时出现
+            Array.prototype.forEach.call(document.querySelectorAll('.model-card'), function (card, index) {
+                card.style.animationDelay = (index * 90) + 'ms';
+            });
+
+            fetch('/api/model_status', { credentials: 'same-origin', cache: 'no-store' })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (!data || !data.success) throw new Error('status unavailable');
+
+                    var models = data.models || [];
+                    var loaded = data.loaded_count || 0;
+                    var total = data.total_count || 0;
+
+                    // 统计卡的数值由后端算好（已含叶片分割+识别那两条网络），
+                    // 这里只负责做个滚动动画。别再按 registry 重算，否则会把 6/38 覆盖回 4/23。
+                    ['stat-models', 'stat-classes', 'stat-tasks'].forEach(function (id) {
+                        var el = document.getElementById(id);
+                        if (!el) return;
+                        PlantUI.countUp(el, parseInt(el.textContent, 10) || 0, { decimals: 0 });
+                    });
+                    document.getElementById('stat-device').textContent = data.cuda ? 'CUDA' : 'CPU';
+
+                    var ok = loaded === total && total > 0;
+                    statusHost.innerHTML =
+                        '<span class="model-chip ' + (ok ? 'is-success' : '') + '">' +
+                        '<i class="bi bi-' + (ok ? 'check-circle' : 'exclamation-triangle') + '"></i>' +
+                        '推理服务 ' + (ok ? '在线' : '部分可用') + ' · ' + loaded + '/' + total + ' 项已就绪</span>';
+                })
+                .catch(function () {
+                    statusHost.innerHTML =
+                        '<span class="model-chip"><i class="bi bi-exclamation-triangle"></i>' +
+                        '无法获取模型状态，请确认服务已启动</span>';
+                });
+        })();
+    </script>
+</body>
+</html>

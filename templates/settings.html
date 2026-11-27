@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统设置 - 植物智能识别系统</title>
+    <link href="/static/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/vendor/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/plant-ui.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 50px;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: #667eea !important;
+            font-size: 1.5rem;
+        }
+
+        .main-container {
+            padding: 100px 0 50px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-title i {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .setting-section {
+            margin-bottom: 35px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .setting-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .setting-item:hover {
+            background: #e9ecef;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .setting-description {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-switch {
+            padding-left: 2.5rem;
+        }
+
+        .form-switch .form-check-input {
+            width: 3rem;
+            height: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-switch .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        .btn-danger-custom {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-danger-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.3);
+        }
+
+        .btn-export {
+            background: var(--success-gradient);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.3);
+        }
+
+        .select-custom {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 8px 15px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .select-custom:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .info-box {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .info-box i {
+            color: #667eea;
+            margin-right: 10px;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #666;
+        }
+
+        .danger-zone {
+            background: rgba(245, 87, 108, 0.05);
+            border: 2px solid rgba(245, 87, 108, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .danger-zone .section-title {
+            color: #f5576c;
+        }
+
+        .danger-zone .section-title i {
+            color: #f5576c;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="bi bi-flower1"></i> 植物智能识别系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="bi bi-grid-fill"></i> 仪表板
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-upload"></i> 我的记录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/statistics">
+                            <i class="bi bi-bar-chart-fill"></i> 统计分析
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">
+                            <i class="bi bi-box-arrow-right"></i> 退出
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="container main-container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="settings-card">
+                    <div class="page-title">
+                        <i class="bi bi-gear-fill"></i>
+                        系统设置
+                    </div>
+                    <p class="page-subtitle">管理您的账户偏好和系统配置</p>
+
+                    <!-- 通知设置 -->
+                    <div class="setting-section">
+                        <div class="section-title">
+                            <i class="bi bi-bell"></i>
+                            通知设置
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">邮件通知</div>
+                                <div class="setting-description">接收识别结果和系统更新的邮件通知</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="emailNotification" checked>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">识别完成提醒</div>
+                                <div class="setting-description">识别任务完成后显示提醒消息</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="completeNotification" checked>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 显示设置 -->
+                    <div class="setting-section">
+                        <div class="section-title">
+                            <i class="bi bi-display"></i>
+                            显示设置
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">界面主题</div>
+                                <div class="setting-description">选择您喜欢的界面配色方案</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="select-custom" id="themeSelect">
+                                    <option value="default" selected>默认主题</option>
+                                    <option value="dark">深色主题</option>
+                                    <option value="light">浅色主题</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">动画效果</div>
+                                <div class="setting-description">启用页面过渡和动画效果</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="animationEffect" checked>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 识别设置 -->
+                    <div class="setting-section">
+                        <div class="section-title">
+                            <i class="bi bi-cpu"></i>
+                            识别设置
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">自动保存结果</div>
+                                <div class="setting-description">自动保存每次识别的结果到记录</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="autoSave" checked>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">图片质量</div>
+                                <div class="setting-description">上传图片的压缩质量设置</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="select-custom" id="imageQuality">
+                                    <option value="high" selected>高质量</option>
+                                    <option value="medium">中等质量</option>
+                                    <option value="low">低质量（更快）</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="info-box">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <p>提示：高质量设置会提供更准确的识别结果，但处理时间会稍长</p>
+                        </div>
+                    </div>
+
+                    <!-- 数据管理 -->
+                    <div class="setting-section">
+                        <div class="section-title">
+                            <i class="bi bi-database"></i>
+                            数据管理
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">导出我的数据</div>
+                                <div class="setting-description">导出所有识别记录和统计数据</div>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn-export" onclick="exportData()">
+                                    <i class="bi bi-download"></i> 导出数据
+                                </button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">数据保留期限</div>
+                                <div class="setting-description">自动删除超过指定时间的历史记录</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="select-custom" id="dataRetention">
+                                    <option value="forever" selected>永久保留</option>
+                                    <option value="1year">1年</option>
+                                    <option value="6months">6个月</option>
+                                    <option value="3months">3个月</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 危险操作 -->
+                    <div class="danger-zone">
+                        <div class="section-title">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            危险操作
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">清空所有记录</div>
+                                <div class="setting-description">删除所有识别历史记录，此操作不可恢复</div>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn-danger-custom" onclick="clearAllRecords()">
+                                    <i class="bi bi-trash"></i> 清空记录
+                                </button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">删除账户</div>
+                                <div class="setting-description">永久删除您的账户及所有相关数据</div>
+                            </div>
+                            <div class="setting-control">
+                                <button class="btn-danger-custom" onclick="deleteAccount()">
+                                    <i class="bi bi-person-x"></i> 删除账户
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/static/vendor/jquery/jquery.min.js"></script>
+    <script>
+        // 导出数据
+        function exportData() {
+            if (confirm('确定要导出所有数据吗？')) {
+                alert('数据导出功能正在开发中，敬请期待！');
+                // TODO: 实现数据导出功能
+            }
+        }
+
+        // 清空所有记录
+        function clearAllRecords() {
+            if (confirm('警告：此操作将删除您的所有识别记录，且无法恢复！\n\n确定要继续吗？')) {
+                if (confirm('请再次确认：您真的要清空所有记录吗？')) {
+                    $.ajax({
+                        url: '/api/clear_all_records',
+                        type: 'DELETE',
+                        success: function(response) {
+                            if (response.success) {
+                                alert('所有记录已清空！');
+                            } else {
+                                alert('清空失败：' + (response.error || '未知错误'));
+                            }
+                        },
+                        error: function() {
+                            alert('操作失败，请稍后重试');
+                        }
+                    });
+                }
+            }
+        }
+
+        // 删除账户
+        function deleteAccount() {
+            if (confirm('警告：删除账户将永久清除您的所有数据，包括识别记录、统计信息等！\n\n此操作不可恢复，确定要继续吗？')) {
+                const username = prompt('请输入您的用户名以确认删除：');
+                if (username) {
+                    $.ajax({
+                        url: '/api/delete_account',
+                        type: 'DELETE',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ username: username }),
+                        success: function(response) {
+                            if (response.success) {
+                                alert('账户已删除，即将跳转到首页...');
+                                window.location.href = '/';
+                            } else {
+                                alert('删除失败：' + (response.error || '未知错误'));
+                            }
+                        },
+                        error: function() {
+                            alert('操作失败，请稍后重试');
+                        }
+                    });
+                }
+            }
+        }
+
+        // 保存设置（当开关切换时自动保存）
+        function saveSettings() {
+            const settings = {
+                emailNotification: $('#emailNotification').is(':checked'),
+                completeNotification: $('#completeNotification').is(':checked'),
+                theme: $('#themeSelect').val(),
+                animationEffect: $('#animationEffect').is(':checked'),
+                autoSave: $('#autoSave').is(':checked'),
+                imageQuality: $('#imageQuality').val(),
+                dataRetention: $('#dataRetention').val()
+            };
+
+            // 保存到localStorage
+            localStorage.setItem('userSettings', JSON.stringify(settings));
+        }
+
+        // 加载设置
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+
+            if (settings.emailNotification !== undefined) {
+                $('#emailNotification').prop('checked', settings.emailNotification);
+            }
+            if (settings.completeNotification !== undefined) {
+                $('#completeNotification').prop('checked', settings.completeNotification);
+            }
+            if (settings.theme) {
+                $('#themeSelect').val(settings.theme);
+            }
+            if (settings.animationEffect !== undefined) {
+                $('#animationEffect').prop('checked', settings.animationEffect);
+            }
+            if (settings.autoSave !== undefined) {
+                $('#autoSave').prop('checked', settings.autoSave);
+            }
+            if (settings.imageQuality) {
+                $('#imageQuality').val(settings.imageQuality);
+            }
+            if (settings.dataRetention) {
+                $('#dataRetention').val(settings.dataRetention);
+            }
+        }
+
+        $(document).ready(function() {
+            loadSettings();
+
+            // 监听所有设置变化
+            $('input[type="checkbox"], select').on('change', function() {
+                saveSettings();
+            });
+        });
+    </script>
+</body>
+</html>

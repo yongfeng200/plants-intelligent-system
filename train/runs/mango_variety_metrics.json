@@ -1,0 +1,14 @@
+{
+  "test_accuracy": 1.0,
+  "best_val_loss": 0.003655305877327919,
+  "class_to_idx": {
+    "Anwar Ratool": 0,
+    "Chaunsa (Black)": 1,
+    "Chaunsa (Summer Bahisht)": 2,
+    "Chaunsa (White)": 3,
+    "Dosehri": 4,
+    "Fajri": 5,
+    "Langra": 6,
+    "Sindhri": 7
+  }
+}
