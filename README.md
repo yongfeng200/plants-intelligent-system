@@ -278,14 +278,8 @@ plants-intelligent-system/
 **Q：第一次预测很慢？**
 服务启动时会对分类模型做一次预热（`model_registry.py`），之后单张图片通常几十毫秒。YOLOv8-seg 首次调用会稍慢，之后正常。
 
-**Q：想换模型目录？**
-设置 `PLANT_MODELS_DIR=D:\path\to\models` 后启动即可，无需改代码。
-
 **Q：端口被占用？**
 修改 `py/main.py` 末尾 `app.run(..., port=5000)`。
-
-**Q：为什么删掉了 `camera_grape_segment.html`、`py/app.py`、`app_mango_leaf_segment.py`？**
-它们对应的后端模型/接口并不存在或已废弃（摄像头接口、旧版单文件入口、GradCAM 诊断页的模板缺失导致访问必然 500），保留只会误导使用。叶片诊断请用 `/leaf_disease/test_predict`：UNet++ 分割病灶 + DINOv2 识别物种与病害。
 
 ## 权重与测试集
 
