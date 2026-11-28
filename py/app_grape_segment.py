@@ -29,6 +29,7 @@ from model_registry import (
     get_detector_entry,
     model_meta,
 )
+from ood_detection import check_image_quality, rejection_payload, success_fields, task_hints
 from user import save_upload_record
 from upload_storage import save_uploaded_file
 
@@ -123,6 +124,46 @@ def app_grape_segment_blueprint():
             return jsonify({"error": f"分割失败: {exc}"}), 500
 
         summary = " | ".join(f"{name}:{count}" for name, count in class_counts.items() if count > 0)
+
+        # ---- 非本模型样本：图像本身不合格，或画面里根本没有葡萄果实
+        try:
+            quality = check_image_quality(cv2.cvtColor(cv2.imread(str(image_path)), cv2.COLOR_BGR2RGB))
+        except Exception:  # noqa: BLE001 - 读图失败就跳过这一层，别影响分割结果
+            quality = []
+        hard = [item for item in quality if item["level"] == "reject"]
+
+        if hard or grape_count == 0:
+            reasons = [item["message"] for item in hard] or [
+                "画面中没有检测到任何葡萄果实（置信度阈值 25%）"
+            ]
+            print(f"[Grape Segment] 拒绝非本模型样本 · {'；'.join(reasons)}")
+            return jsonify(rejection_payload(
+                {
+                    "status": "rejected",
+                    "score": None,
+                    "scores": {},
+                    "reasons": reasons,
+                    "message": "这张图片不像能识别的葡萄果实样本，系统没有输出分割结果。",
+                    "hints": task_hints("grape_segment", calibrated=False),
+                    "quality": quality,
+                    "calibrated": False,
+                },
+                model_meta("grape_segment", elapsed_ms),
+                {"upload_image": upload_url},
+            ))
+
+        # 只检测到零星果实：能给结果，但提醒一下可能拍得不全
+        ood_like = {
+            "status": "suspicious" if grape_count < 2 else "ok",
+            "score": None,
+            "scores": {},
+            "reasons": [item["message"] for item in quality if item["level"] == "warn"],
+            "message": "画面中只检测到 1 颗果实，分割结果可能不完整。" if grape_count < 2 else "",
+            "hints": task_hints("grape_segment", calibrated=False),
+            "quality": quality,
+            "calibrated": False,
+        }
+
         # 写库失败只记日志，不能因为统计信息失败让用户看不到识别结果
         try:
             save_upload_record(
@@ -137,6 +178,7 @@ def app_grape_segment_blueprint():
             print(f"[Grape Segment] 保存记录失败: {exc}")
 
         response = {
+            **success_fields(ood_like),
             "upload_image": upload_url,
             "result_base64": result_url,
             "grape_count": grape_count,

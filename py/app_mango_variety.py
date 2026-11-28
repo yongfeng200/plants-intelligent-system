@@ -25,6 +25,7 @@ from model_registry import (
     model_meta,
     run_classification,
 )
+from ood_detection import rejection_payload, success_fields
 from user import save_upload_record
 from upload_storage import save_uploaded_file
 
@@ -117,6 +118,16 @@ def app_mango_variety_blueprint():
             "characteristics": ["请咨询专业人员"],
         })
 
+        # 不是芒果果实样本：不给预测，也不写进识别记录
+        if not result["valid"]:
+            print(
+                f"[Mango Variety] 拒绝非本模型样本 · "
+                f"{'；'.join(result['ood']['reasons']) or result['ood']['message']}"
+            )
+            return jsonify(rejection_payload(
+                result["ood"], result["model"], {"upload_image": upload_url}
+            ))
+
         # 写库失败只记日志，不能因为统计信息失败让用户看不到识别结果
         try:
             save_upload_record(
@@ -131,6 +142,7 @@ def app_mango_variety_blueprint():
             print(f"[Mango Variety] 保存记录失败: {exc}")
 
         response = {
+            **success_fields(result["ood"]),
             "upload_image": upload_url,
             "predict": result["predict"],
             "predict_cn": result["predict_cn"],

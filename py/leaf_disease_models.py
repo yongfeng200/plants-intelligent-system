@@ -32,6 +32,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import transforms
 
+from ood_detection import get_guard
+
 try:
     import timm
 except ImportError:                                   # 只有加载分类模型时才真的需要
@@ -85,8 +87,12 @@ class LeafClassifier(nn.Module):
         self.species = nn.Linear(hidden, num_species)
         self.disease = nn.Linear(hidden, num_diseases)
 
+    def forward_features(self, images):
+        """主干 + head 融合后的表示（hidden 维），OOD 判定用。"""
+        return self.head(self.backbone(images))
+
     def forward(self, images):
-        hidden = self.head(self.backbone(images))
+        hidden = self.forward_features(images)
         return self.species(hidden), self.disease(hidden)
 
 
@@ -374,13 +380,30 @@ class LeafDiseasePipeline:
     def classify(self, image_rgb: np.ndarray):
         tensor = self._cls_tensor(image_rgb)
         with torch.no_grad():
-            species_logits, disease_logits = self.cls_model(tensor)
+            hidden = self.cls_model.forward_features(tensor)
+            species_logits = self.cls_model.species(hidden)
+            disease_logits = self.cls_model.disease(hidden)
             if self.cls_tta:                    # 原图 + 水平翻转取平均，和 §10 测试一致
-                flip_species, flip_disease = self.cls_model(torch.flip(tensor, dims=[3]))
-                species_logits = (species_logits + flip_species) / 2
-                disease_logits = (disease_logits + flip_disease) / 2
+                flip_hidden = self.cls_model.forward_features(torch.flip(tensor, dims=[3]))
+                species_logits = (species_logits + self.cls_model.species(flip_hidden)) / 2
+                disease_logits = (disease_logits + self.cls_model.disease(flip_hidden)) / 2
             species_probs = F.softmax(species_logits, dim=1)[0].float().cpu().numpy()
             disease_probs = F.softmax(disease_logits, dim=1)[0].float().cpu().numpy()
+
+        # 非本模型样本判定：图像质量 + 物种头置信度 + hidden 特征的马氏距离
+        try:
+            ood_result = get_guard("leaf_disease").evaluate(
+                hidden[0].float().cpu().numpy(),
+                species_logits[0].float().cpu().numpy(),
+                species_probs,
+                image_rgb=image_rgb,
+            )
+        except Exception as exc:  # noqa: BLE001 - 判定异常不能拖垮正常推理
+            print(f"[OOD] leaf_disease 判定异常，按正常样本处理: {exc}")
+            ood_result = {
+                "status": "ok", "score": None, "scores": {}, "reasons": [],
+                "message": "", "hints": [], "quality": [], "calibrated": False,
+            }
 
         joint = np.outer(species_probs, disease_probs)
         if self._valid is not None:
@@ -418,6 +441,8 @@ class LeafDiseasePipeline:
             "top_pairs": top_pairs,
             "species_probs": [round(float(v) * 100, 2) for v in species_probs],
             "disease_probs": [round(float(v) * 100, 2) for v in disease_probs],
+            "valid": ood_result["status"] != "rejected",
+            "ood": ood_result,
         }
 
     # 一次完整的「分割 + 分类」，并画好 overlay 供前端直接展示

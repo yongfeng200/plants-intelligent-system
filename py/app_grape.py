@@ -25,6 +25,7 @@ from model_registry import (
     model_meta,
     run_classification,
 )
+from ood_detection import rejection_payload, success_fields
 from user import save_upload_record
 from upload_storage import save_uploaded_file
 
@@ -123,6 +124,16 @@ def app_grape_blueprint():
             "advice": ["建议咨询专业农技人员"],
         })
 
+        # 不是葡萄叶片样本：不给预测，也不写进识别记录
+        if not result["valid"]:
+            print(
+                f"[Grape Disease] 拒绝非本模型样本 · "
+                f"{'；'.join(result['ood']['reasons']) or result['ood']['message']}"
+            )
+            return jsonify(rejection_payload(
+                result["ood"], result["model"], {"upload_image": upload_url}
+            ))
+
         # 写库失败只记日志，不能因为统计信息失败让用户看不到识别结果
         try:
             save_upload_record(
@@ -137,6 +148,7 @@ def app_grape_blueprint():
             print(f"[Grape Disease] 保存记录失败: {exc}")
 
         response = {
+            **success_fields(result["ood"]),
             "upload_image": upload_url,
             "predict": result["predict"],
             "predict_cn": result["predict_cn"],

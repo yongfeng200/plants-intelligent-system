@@ -26,11 +26,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
 from torchvision import models, transforms
+
+import ood_detection
+from ood_detection import get_guard
 
 # ---------------------------------------------------------------------------
 # 路径与设备
@@ -130,8 +134,12 @@ class MDCN(nn.Module):
         )
         self.num_classes = num_classes
 
+    def forward_features(self, x: torch.Tensor) -> torch.Tensor:
+        """倒数第二层特征（1024 维），OOD 判定用。"""
+        return torch.flatten(self.pool(torch.relu(self.features(x))), 1)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.classifier(self.pool(torch.relu(self.features(x))))
+        return self.classifier(self.forward_features(x))
 
 
 class ChannelAttention(nn.Module):
@@ -184,7 +192,8 @@ class GrapeDiseaseNet(nn.Module):
             nn.Linear(2048, num_classes),
         )
 
-    def forward(self, x):
+    def forward_features(self, x):
+        """CBAM 之后的池化特征（2048 维），OOD 判定用。"""
         b = self.backbone
         x = b.maxpool(b.relu(b.bn1(b.conv1(x))))
         x = b.layer1(x)
@@ -192,7 +201,10 @@ class GrapeDiseaseNet(nn.Module):
         x = b.layer3(x)
         x = b.layer4(x)
         x = self.cbam(x)
-        return b.fc(torch.flatten(b.avgpool(x), 1))
+        return torch.flatten(b.avgpool(x), 1)
+
+    def forward(self, x):
+        return self.backbone.fc(self.forward_features(x))
 
 
 class MangoVarietyNet(nn.Module):
@@ -208,10 +220,12 @@ class MangoVarietyNet(nn.Module):
             nn.Linear(base.classifier[1].in_features, num_classes),
         )
 
+    def forward_features(self, x):
+        """全局池化后的特征（1792 维），OOD 判定用。"""
+        return torch.flatten(self.avgpool(self.features(x)), 1)
+
     def forward(self, x):
-        x = self.features(x)
-        x = self.avgpool(x)
-        return self.classifier(torch.flatten(x, 1))
+        return self.classifier(self.forward_features(x))
 
 
 # ---------------------------------------------------------------------------
@@ -544,7 +558,11 @@ def transform_image(key: str, image: Image.Image) -> torch.Tensor:
 
 
 def run_classification(key: str, image: Image.Image) -> Dict[str, Any]:
-    """执行分类推理，返回统一结构；模型不可用时抛 ModelNotReady。"""
+    """执行分类推理，返回统一结构；模型不可用时抛 ModelNotReady。
+
+    除了预测类别，还会做一次「非本模型样本」判定，结果放在 ``valid`` 和 ``ood``：
+    ``valid=False`` 表示这张图不该被这个模型诊断，调用方必须拒绝输出预测。
+    """
     entry = get_model_entry(key)
     task = TASKS[key]
     tensor = transform_image(key, image).to(DEVICE)
@@ -552,6 +570,8 @@ def run_classification(key: str, image: Image.Image) -> Dict[str, Any]:
     started = time.perf_counter()
     with torch.inference_mode():
         logits = entry.model(tensor)
+        feature_fn = getattr(entry.model, "forward_features", None)
+        features = feature_fn(tensor) if feature_fn is not None else None
         probs = F.softmax(logits, dim=1)[0]
     elapsed_ms = (time.perf_counter() - started) * 1000
 
@@ -559,6 +579,27 @@ def run_classification(key: str, image: Image.Image) -> Dict[str, Any]:
     confidence = float(probs[index].item() * 100)
     probs_cn = _class_names(key, "cn")
     probs_en = _class_names(key, "en")
+
+    # 非本模型样本判定：图像质量 + 置信度 + 特征空间马氏距离
+    try:
+        ood_result = get_guard(key).evaluate(
+            features[0].float().cpu().numpy() if features is not None else None,
+            logits[0].cpu().numpy(),
+            probs.cpu().numpy(),
+            image_rgb=np.asarray(image.convert("RGB")),
+        )
+    except Exception as exc:  # noqa: BLE001 - 判定失败不能拖垮正常推理
+        print(f"[OOD] {key} 判定异常，按正常样本处理: {exc}")
+        ood_result = {
+            "status": ood_detection.STATUS_OK,
+            "score": None,
+            "scores": {},
+            "reasons": [],
+            "message": "",
+            "hints": [],
+            "quality": [],
+            "calibrated": False,
+        }
 
     return {
         "task": key,
@@ -573,6 +614,8 @@ def run_classification(key: str, image: Image.Image) -> Dict[str, Any]:
         "model_type": task["model_type"],
         "elapsed_ms": round(elapsed_ms, 2),
         "model": model_meta(key, elapsed_ms),
+        "valid": ood_result["status"] != ood_detection.STATUS_REJECTED,
+        "ood": ood_result,
     }
 
 

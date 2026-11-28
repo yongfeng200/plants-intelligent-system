@@ -29,6 +29,7 @@ from leaf_disease_models import (
     get_pipeline,
     pipeline_status,
 )
+from ood_detection import rejection_payload, success_fields
 from user import save_upload_record
 from upload_storage import save_uploaded_file
 
@@ -109,6 +110,23 @@ def leaf_disease_blueprint():
         mask_url = _png_data_url(mask_png)
         overlay_url = _jpg_data_url(result["overlay"])
 
+        # 不是作物叶片样本：不给诊断结论，也不写进识别记录
+        if not result["valid"]:
+            print(
+                f"[Leaf Disease] 拒绝非本模型样本 · "
+                f"{'；'.join(result['ood']['reasons']) or result['ood']['message']}"
+            )
+            return jsonify(rejection_payload(
+                result["ood"],
+                {
+                    "device": str(DEVICE),
+                    "segmentation": f"UNet++ · {pipeline.seg_encoder}",
+                    "classifier": f"{pipeline.cls_backbone} · 双头",
+                    "checkpoint": CLS_CHECKPOINT.name,
+                },
+                {"upload_image": upload_url},
+            ))
+
         disease_cn = DISEASE_CN.get(result["disease"], result["disease"])
         # 写库失败只记日志，不影响本次响应
         try:
@@ -129,6 +147,7 @@ def leaf_disease_blueprint():
         })
 
         response = {
+            **success_fields(result["ood"]),
             "upload_image": upload_url,
             "mask_base64": mask_url,
             "overlay_base64": overlay_url,

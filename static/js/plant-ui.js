@@ -94,6 +94,105 @@
         }
     }
 
+    /* -------------------- 非本模型样本提示 -------------------- */
+    function bannerHost() {
+        var host = $('.ood-banner-host');
+        if (host) return host;
+        host = document.createElement('div');
+        host.className = 'ood-banner-host';
+        var card = $('.upload-card');
+        if (card && card.parentNode) {
+            card.parentNode.insertBefore(host, card.nextSibling);
+        } else {
+            document.body.insertBefore(host, document.body.firstChild);
+        }
+        return host;
+    }
+
+    function clearBanner() {
+        var host = $('.ood-banner-host');
+        if (host) host.innerHTML = '';
+    }
+
+    function listHtml(items) {
+        return '<ul>' + (items || []).map(function (item) {
+            return '<li>' + escapeHtml(item) + '</li>';
+        }).join('') + '</ul>';
+    }
+
+    /* 后端判定「不是本模型样本」时调用：清掉上一次的结果，明确告诉用户为什么 */
+    function showRejection(data) {
+        data = data || {};
+        var host = bannerHost();
+        var reasons = data.reasons || [];
+        var hints = data.hints || [];
+
+        var html = '<div class="ood-banner is-reject plant-enter">';
+        html += '<div class="ood-banner-head"><i class="bi bi-shield-exclamation"></i><span>' +
+            escapeHtml(data.message || '这张图片无法被本模型识别') + '</span></div>';
+        if (reasons.length) {
+            html += '<div class="ood-banner-body"><strong>原因</strong>' + listHtml(reasons) + '</div>';
+        }
+        if (hints.length) {
+            html += '<div class="ood-banner-body"><strong>建议上传</strong>' + listHtml(hints) + '</div>';
+        }
+        html += '</div>';
+        host.innerHTML = html;
+
+        // 清掉上一次的预测结果，避免用户把旧结果当成这张图的结论
+        var title = $('#predict_class');
+        if (title) title.innerHTML = '<span style="color:#c0392b;">无法识别该图片</span>';
+
+        var chart = $('#main1');
+        if (chart) {
+            if (global.echarts) {
+                var instance = global.echarts.getInstanceByDom(chart);
+                if (instance) instance.dispose();
+            }
+            chart.innerHTML = '<div class="chart-loading"><i class="bi bi-shield-exclamation"></i>' +
+                ' 未输出概率分布</div>';
+        }
+
+        var resultCard = $('#result-card');
+        if (resultCard) resultCard.style.display = 'none';
+
+        var count = $('#grape-count');
+        if (count) count.textContent = '0';
+
+        var report = $('#report');
+        if (report) report.innerHTML = '';
+        var treatment = $('#treatment');
+        if (treatment) treatment.innerHTML = '';
+        var alertSlot = $('#alert-slot');
+        if (alertSlot) alertSlot.innerHTML = '';
+
+        if (host.scrollIntoView) {
+            host.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        }
+        return true;
+    }
+
+    /* 后端判定「疑似」：照常给结果，但顶部挂一条可关闭的提醒 */
+    function showWarning(warning) {
+        warning = warning || {};
+        var host = bannerHost();
+        var html = '<div class="ood-banner is-warn plant-enter">';
+        html += '<button type="button" class="ood-banner-close" aria-label="关闭">&times;</button>';
+        html += '<div class="ood-banner-head"><i class="bi bi-exclamation-triangle"></i><span>' +
+            escapeHtml(warning.message || '这张图片可能不是本模型的典型样本，结果仅供参考。') + '</span></div>';
+        if ((warning.reasons || []).length) {
+            html += '<div class="ood-banner-body"><strong>参考信息</strong>' + listHtml(warning.reasons) + '</div>';
+        }
+        html += '</div>';
+        host.innerHTML = html;
+
+        var close = $('.ood-banner-close', host);
+        if (close) {
+            close.addEventListener('click', function () { clearBanner(); });
+        }
+        return true;
+    }
+
     /* -------------------- 上传 + 拖拽 + 请求 -------------------- */
     function bindUpload(options) {
         options = options || {};
@@ -200,6 +299,20 @@
                 }
 
                 var elapsed = Math.round(performance.now() - started);
+
+                // 后端判定这张图不是本模型能识别的样本：不渲染任何预测结果
+                if (data.valid === false) {
+                    showRejection(data);
+                    if (options.onInvalid) options.onInvalid(data);
+                    return;
+                }
+
+                if (data.warning) {
+                    showWarning(data.warning);
+                } else {
+                    clearBanner();
+                }
+
                 options.onSuccess(data, elapsed);
                 if (options.successToast !== false) {
                     toast((options.successText || '识别完成') + ' · ' + elapsed + ' ms', 'success');
@@ -507,6 +620,9 @@
         enter: enter,
         countUp: countUp,
         initParticles: initParticles,
+        showRejection: showRejection,
+        showWarning: showWarning,
+        clearBanner: clearBanner,
         escapeHtml: escapeHtml,
         wrapLabel: wrapLabel
     };

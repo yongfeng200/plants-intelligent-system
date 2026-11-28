@@ -387,3 +387,81 @@
         min-height: 340px;
     }
 }
+
+/* -------------------- 非本模型样本提示 -------------------- */
+.ood-banner-host {
+    margin: -1rem 0 2rem;
+}
+
+.ood-banner {
+    border-radius: 20px;
+    padding: 1.15rem 1.35rem;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.12);
+    border-left: 5px solid #c0392b;
+    animation: slideUp 0.4s ease-out;
+}
+
+.ood-banner.is-warn {
+    border-left-color: #e6a23c;
+}
+
+.ood-banner-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #2c3e50;
+    line-height: 1.55;
+}
+
+.ood-banner.is-reject .ood-banner-head i {
+    color: #c0392b;
+    font-size: 1.25rem;
+    margin-top: 2px;
+}
+
+.ood-banner.is-warn .ood-banner-head i {
+    color: #e6a23c;
+    font-size: 1.25rem;
+    margin-top: 2px;
+}
+
+.ood-banner-body {
+    margin-top: 0.85rem;
+    font-size: 0.9rem;
+    color: #5b6472;
+    line-height: 1.65;
+}
+
+.ood-banner-body strong {
+    display: block;
+    color: #2c3e50;
+    font-size: 0.86rem;
+    margin-bottom: 0.25rem;
+}
+
+.ood-banner-body ul {
+    margin: 0;
+    padding-left: 1.15rem;
+}
+
+.ood-banner-body li {
+    margin-bottom: 0.3rem;
+}
+
+.ood-banner-close {
+    float: right;
+    border: none;
+    background: transparent;
+    color: #8a94a6;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0 4px;
+    cursor: pointer;
+}
+
+.ood-banner-close:hover {
+    color: #2c3e50;
+}
